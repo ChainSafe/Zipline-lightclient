@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 	"time"
-	"bytes"
+	// "bytes"
 	"strconv"
 
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
@@ -81,7 +81,8 @@ func main() {
 					mu.RegWrite(uc.MIPS_REG_PC, 0x5ead0004)
 				}
 			}
-			if step%1000000 == 0 {
+			if step%10000000 == 0 {
+				SyncRegs(mu, ram)
 				steps_per_sec := float64(step) * 1e9 / float64(time.Now().Sub(ministart).Nanoseconds())
 				fmt.Printf("%10d pc: %x steps per s %f ram entries %d\n", step, ram[0xc0000080], steps_per_sec, len(ram))
 			}
@@ -120,10 +121,10 @@ func main() {
 			log.Fatal("failed to output state root, exiting")
 		}
 
-		output_filename := fmt.Sprintf("%s/output", root)
-		outputs, err := ioutil.ReadFile(output_filename)
-		check(err)
-		real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
+		// output_filename := fmt.Sprintf("%s/output", root)
+		// outputs, err := ioutil.ReadFile(output_filename)
+		// check(err)
+		// real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
 
 		output := []byte{}
 		for i := 0; i < 0x44; i += 4 {
@@ -132,12 +133,14 @@ func main() {
 			output = append(output, t...)
 		}
 
-		if bytes.Compare(real, output) != 0 {
-			fmt.Println("MISMATCH OUTPUT, OVERWRITING!!!")
-			ioutil.WriteFile(output_filename, output[4:], 0644)
-		} else {
-			fmt.Println("output match")
-		}
+		// if bytes.Compare(real, output) != 0 {
+		// 	fmt.Println("MISMATCH OUTPUT, OVERWRITING!!!")
+		// 	ioutil.WriteFile(output_filename, output[4:], 0644)
+		// } else {
+		// 	fmt.Println("output match")
+		// }
+		// 
+		fmt.Printf("Output: %x \n", output);
 
 		WriteCheckpoint(ram, fmt.Sprintf("%s/checkpoint_final.json", root), lastStep)
 
