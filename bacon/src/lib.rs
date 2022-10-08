@@ -106,8 +106,8 @@ pub struct SigningData {
 }
 #[derive(Default, SimpleSerialize)]
 pub struct SSZSyncCommittee {
-    pub pubkeys: Vector<Vector<u8, { PUBKEY_SIZE }>, { SYNC_COMMITTEE_SIZE }>,
-    pub aggregate_pubkey: Vector<u8, { PUBKEY_SIZE }>,
+    pub pubkeys: Vector<Vector<u8, PUBKEY_SIZE>, SYNC_COMMITTEE_SIZE>,
+    pub aggregate_pubkey: Vector<u8, PUBKEY_SIZE>,
 }
 #[derive(Default, SimpleSerialize, Clone, Debug)]
 pub struct SSZBeaconBlockHeader {
@@ -119,8 +119,8 @@ pub struct SSZBeaconBlockHeader {
 }
 #[derive(Default, Debug, SimpleSerialize, Clone)]
 pub struct SSZSyncAggregate {
-    pub sync_committee_bits: Bitvector<{ SYNC_COMMITTEE_SIZE }>,
-    pub sync_committee_signature: Vector<u8, { SIGNATURE_SIZE }>,
+    pub sync_committee_bits: Bitvector<SYNC_COMMITTEE_SIZE>,
+    pub sync_committee_signature: Vector<u8, SIGNATURE_SIZE>,
 }
 
 #[derive(Default, SimpleSerialize)]
