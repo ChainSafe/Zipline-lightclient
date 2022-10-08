@@ -155,7 +155,13 @@ pub struct SSZSyncCommitteePeriodUpdate {
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_fork_version"))]
     pub fork_version: ForkVersion,
 }
-
+#[derive(Default, SimpleSerialize)]
+pub struct SSZFinalizedHeaderUpdate {
+    pub attested_header: SSZBeaconBlockHeader,
+    pub finalized_header: SSZBeaconBlockHeader,
+    pub finality_branch: Vector<[u8; 32], 6>,
+    pub sync_aggregate: SSZSyncAggregate,
+}
 #[derive(Clone, Debug)]
 pub struct SyncCommittee {
     // should this be a smallvec???
@@ -180,7 +186,19 @@ pub struct FinalizedHeaderUpdate  {
 	pub finalized_header: BeaconHeader,
 	pub finality_branch: Vec<H256>,
 	pub sync_aggregate: SyncAggregate,
-	pub fork_version: ForkVersion,
+}
+
+
+
+impl From<SSZFinalizedHeaderUpdate> for FinalizedHeaderUpdate {
+    fn from(ssz: SSZFinalizedHeaderUpdate) -> Self {
+        FinalizedHeaderUpdate {
+            attested_header: ssz.attested_header.into(),
+            finalized_header:ssz.finalized_header.into(),
+            finality_branch: ssz.finality_branch.iter().map(|v| H256(*v)).collect(),
+            sync_aggregate: ssz.sync_aggregate.into(),
+        }
+    }
 }
 
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {

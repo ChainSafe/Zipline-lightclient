@@ -10,7 +10,8 @@ pub mod finalized_header;
 pub mod utils;
 
 pub use types::*;
-pub use update_sync_committee::*;
+pub use update_sync_committee::process_sync_committee_period_update;
+pub use finalized_header::process_finalized_header;
 // use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
@@ -50,3 +51,18 @@ pub fn ssz_process_sync_committee_period_update(
         .map_err(|_e| "failed sync comitte update period: {}".to_string())
 }
 
+pub fn ssz_process_finalized_header(update: Vec<u8>, sync_committee: Vec<u8>, validators_root: H256) -> Result<BeaconHeader, String> {
+    tryprintln!("entry point");
+    let update: SSZFinalizedHeaderUpdate =
+        deserialize(&update).map_err(|_e| "Failed to decode previous update".to_string())?;
+    tryprintln!("decode 1");
+    let sync_committee: SSZSyncCommittee = SSZSyncCommittee::deserialize(&sync_committee)
+        .map_err(|_| "Failed to decode update")?;
+    tryprintln!("decode 2");
+
+    let update = FinalizedHeaderUpdate::from(update);
+    let sync_committee = SyncCommittee::from(sync_committee);
+
+    process_finalized_header(update, sync_committee, validators_root)
+        .map_err(|_e| "failed sync comitte update period: {}".to_string())
+}

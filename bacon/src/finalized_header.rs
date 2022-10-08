@@ -20,12 +20,12 @@ pub fn process_finalized_header(update: FinalizedHeaderUpdate, sync_committee:Sy
 
     // let current_period = compute_current_sync_period(update.attested_header.slot);
     // let sync_committee = Self::get_sync_committee_for_period(current_period)?;
-
+    let fork_version: [u8;4] = [2,0,0,0];
     verify_signed_header(
         sync_committee_bits,
         update.sync_aggregate.sync_committee_signature,
         sync_committee.pubkeys,
-        update.fork_version,
+        fork_version,
         update.attested_header,
         validators_root,
     )?;
