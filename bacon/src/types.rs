@@ -1,3 +1,5 @@
+use ssz_rs::deserialize;
+use crate::alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use sha2::{Digest, Sha256};
@@ -179,6 +181,15 @@ pub struct SyncCommitteePeriodUpdate {
     pub sync_aggregate: SyncAggregate,
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_fork_version"))]
     pub fork_version: ForkVersion,
+}
+
+impl TryFrom<&[u8]> for SyncCommitteePeriodUpdate {
+    type Error = String;
+    fn try_from(bytes: &[u8]) -> Result<Self, String> {
+        let ssz_form: SSZSyncCommitteePeriodUpdate =
+            deserialize(&bytes).map_err(|_e| "Failed to decode previous update".to_string())?;
+        Ok(Self::from(ssz_form))
+    }
 }
 
 pub struct FinalizedHeaderUpdate  {

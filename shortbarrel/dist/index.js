@@ -71,7 +71,7 @@ function shell(cmd) {
 ///
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var api, previousPeriod, data, inputs, shellCmdStr, out;
+        var api, previousPeriod, data, inputs;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -83,18 +83,15 @@ function main() {
                     return [4 /*yield*/, api.lightclient.getUpdates(previousPeriod, 2)];
                 case 2:
                     data = (_a.sent()).data;
-                    console.log("writing emulator inputs");
                     inputs = data.map(getEmulatorInput);
+                    console.log("previousPeriod hash: ".concat(inputs[0].updateHash));
+                    console.log("currentPeriod hash: ".concat(inputs[1].updateHash));
+                    console.log("writing emulator inputs to preimage-cache");
                     return [4 /*yield*/, Promise.all(inputs.map(function (input) {
-                            return writeFile(join(INPUT_DIRECTORY, input.updateHash), input.update);
+                            return writeFile(join(INPUT_DIRECTORY, "0x" + input.updateHash), input.update);
                         }))];
                 case 3:
                     _a.sent();
-                    shellCmdStr = "".concat(EMULATOR_CMD, " ").concat(inputs
-                        .map(function (input) { return input.updateHash; })
-                        .join(" "));
-                    console.log("calling emulator", shellCmdStr);
-                    out = shell(shellCmdStr).split(" ");
                     return [2 /*return*/];
             }
         });

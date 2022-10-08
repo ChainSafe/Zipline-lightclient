@@ -22,8 +22,23 @@ func WriteCheckpoint(ram map[uint32](uint32), fn string, step int) {
 }
 
 func main() {
-	// root := ""
 	target := -1
+
+	inputHashA, err := hex.DecodeString(os.Args[1])
+	inputHashB, err := hex.DecodeString(os.Args[2])
+
+	if len(os.Args) > 3 {
+		target, _ = strconv.Atoi(os.Args[3])
+	}
+
+	// inputHashA, err := hex.DecodeString("e4c2cee3a9455c2b7c0449152a8c7e1a7b811353e4ea2c1dbe1cbe0c790b45f7")
+	// inputHashB, err := hex.DecodeString("dead69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// root := ""
 
 	regfault := -1
 	regfault_str, regfault_valid := os.LookupEnv("REGFAULT")
@@ -98,17 +113,15 @@ func main() {
 			os.Exit(0)
 		}
 
+		fmt.Println("Golden root hash %s", RamToTrie(ram))
+
 		// write the inputs into Unicorn memory
-
-		inputHashA, err := hex.DecodeString("e4c2cee3a9455c2b7c0449152a8c7e1a7b811353e4ea2c1dbe1cbe0c790b45f7")
-		inputHashB, err := hex.DecodeString("dead69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85")
-
-		if err != nil {
-			log.Fatal(err)
-		}
 
 		mu.MemWrite(0x30000000, inputHashA[:])
 		mu.MemWrite(0x30000020, inputHashB[:])
+
+		fmt.Println("Initial execution root hash %s", RamToTrie(ram))
+
 
 		// LoadMappedFileUnicorn(mu, fmt.Sprintf("%s/input", root), ram, 0x30000000)
 

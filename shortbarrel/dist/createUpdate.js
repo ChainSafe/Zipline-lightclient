@@ -65,13 +65,10 @@ function getEmulatorInput(update) {
     var hash = utils.keccak256(serialized).slice(2);
     return { update: serialized, updateHash: hash };
 }
-function shell(cmd) {
-    return execSync(cmd, { encoding: "utf8", stdio: "pipe" }).trim();
-}
 ///
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var api, previousPeriod, data, inputs, shellCmdStr;
+        var api, previousPeriod, data, inputs, shellCmdStr, out;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -94,9 +91,14 @@ function main() {
                         .map(function (input) { return input.updateHash; })
                         .join(" "));
                     console.error("calling emulator", shellCmdStr);
-                    //const out = shell(shellCmdStr).split(" ");
+                    out = execSync(shellCmdStr);
+                    if (out.length !== 64) {
+                        console.error("expected emulator output of 64 bytes, got ".concat(out.length, " bytes"));
+                        process.exit(1);
+                    }
                     // write out finalized block root and ssz-serialized update
                     process.stdout.write(Buffer.concat([
+                        out,
                         ssz.phase0.BeaconBlockHeader.hashTreeRoot(data[1].finalizedHeader),
                         inputs[1].update,
                     ]));

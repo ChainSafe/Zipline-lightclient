@@ -3,26 +3,22 @@
 #![no_std]
 extern crate alloc;
 
-
-pub mod update_sync_committee;
-pub mod types;
 pub mod finalized_header;
+pub mod types;
+pub mod update_sync_committee;
 pub mod utils;
 
-pub use types::*;
-pub use update_sync_committee::process_sync_committee_period_update;
 pub use finalized_header::process_finalized_header;
-// use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
-// pub use snowbridge_ethereum::H256;
 pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
+pub use types::*;
+pub use update_sync_committee::process_sync_committee_period_update;
 
-use alloc::string::String;
 use crate::alloc::string::ToString;
-
+use alloc::string::String;
 
 macro_rules! tryprintln {
     ($body:expr) => {
@@ -35,30 +31,27 @@ pub fn ssz_process_sync_committee_period_update(
     update: &[u8],
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), String> {
-    tryprintln!("entry point");
-    let prev_update: SSZSyncCommitteePeriodUpdate =
-        deserialize(&prev_update).map_err(|_e| "Failed to decode previous update".to_string())?;
-    tryprintln!("decode 1");
-    let update: SSZSyncCommitteePeriodUpdate = SSZSyncCommitteePeriodUpdate::deserialize(&update)
-        .map_err(|_| "Failed to decode update")?;
-    tryprintln!("decode 2");
+    // deserialize from bytes into structured types for the sync committee
+    let prev_update = SyncCommitteePeriodUpdate::try_from(prev_update)?;
+    let update = SyncCommitteePeriodUpdate::try_from(update)?;
 
-    let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
-    let update = SyncCommitteePeriodUpdate::from(update);
-
-    // Ok((_prev_update.next_sync_committee, _prev_update.attested_header))
-
+    // Process the update between the prev and current updates
+    // If it validates successfully returns Ok()
+    // Otherwise returns the error string
     process_sync_committee_period_update(prev_update, update, validators_root)
-        .map_err(|_e| "failed sync comitte update period: {}".to_string())
 }
 
-pub fn ssz_process_finalized_header(update: &[u8], sync_committee: &[u8], validators_root: H256) -> Result<BeaconHeader, String> {
+pub fn ssz_process_finalized_header(
+    update: &[u8],
+    sync_committee: &[u8],
+    validators_root: H256,
+) -> Result<BeaconHeader, String> {
     tryprintln!("entry point");
     let update: SSZFinalizedHeaderUpdate =
         deserialize(&update).map_err(|_e| "Failed to decode previous update".to_string())?;
     tryprintln!("decode 1");
-    let sync_committee: SSZSyncCommittee = SSZSyncCommittee::deserialize(&sync_committee)
-        .map_err(|_| "Failed to decode update")?;
+    let sync_committee: SSZSyncCommittee =
+        SSZSyncCommittee::deserialize(&sync_committee).map_err(|_| "Failed to decode update")?;
     tryprintln!("decode 2");
 
     let update = FinalizedHeaderUpdate::from(update);

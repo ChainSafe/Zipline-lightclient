@@ -53,22 +53,26 @@ async function main(): Promise<void> {
   );
 
   const { data } = await api.lightclient.getUpdates(previousPeriod, 2);
-
-  console.log(`writing emulator inputs`);
-
   const inputs = data.map(getEmulatorInput);
+
+  console.log(`previousPeriod hash: ${inputs[0].updateHash}`);
+
+  console.log(`currentPeriod hash: ${inputs[1].updateHash}`);
+
+  console.log(`writing emulator inputs to preimage-cache`);
+
   await Promise.all(
     inputs.map((input) =>
-      writeFile(join(INPUT_DIRECTORY, input.updateHash), input.update)
+      writeFile(join(INPUT_DIRECTORY, "0x" + input.updateHash), input.update)
     )
   );
 
-  const shellCmdStr = `${EMULATOR_CMD} ${inputs
-    .map((input) => input.updateHash)
-    .join(" ")}`;
-  console.log(`calling emulator`, shellCmdStr);
+  // const shellCmdStr = `${EMULATOR_CMD} ${inputs
+  //   .map((input) => input.updateHash)
+  //   .join(" ")}`;
+  // console.log(`calling emulator`, shellCmdStr);
 
-  const out = shell(shellCmdStr).split(" ");
+  // const out = shell(shellCmdStr).split(" ");
 }
 
 main();
