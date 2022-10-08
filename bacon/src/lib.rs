@@ -1,9 +1,8 @@
 //! # Ethereum Beacon Client
 // #![cfg_attr(not(feature = "std"), no_std)]
-// #![no_std]
-// extern crate alloc;
+#![no_std]
+extern crate alloc;
 
-// use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
 // pub use snowbridge_ethereum::H256;
@@ -12,10 +11,11 @@ pub use ssz_rs::{
 };
 use ssz_rs_derive::SimpleSerialize;
 
-// use alloc::vec;
-// use alloc::vec::Vec;
-// use alloc::format;
+use alloc::vec;
+use alloc::vec::Vec;
 use sha2::{Digest, Sha256};
+use alloc::string::String;
+use crate::alloc::string::ToString;
 
 pub type ForkVersion = [u8; 4];
 pub const SYNC_COMMITTEE_SIZE: usize = 512;
@@ -35,9 +35,10 @@ pub const IS_MINIMAL: bool = false;
 pub type Domain = H256;
 pub type Root = H256;
 
-#[cfg(feature = "no-println")]
-macro_rules! println {
-    ($body:expr) => {};
+macro_rules! tryprintln {
+    ($body:expr) => {
+        // println!(body)
+    };
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -79,10 +80,10 @@ impl H256 {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PublicKey(pub [u8; 48]);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BeaconHeader {
     // The slot for which this block is created. Must be greater than the slot of the block defined
     // by parentRoot.
@@ -159,7 +160,7 @@ pub struct SSZSyncCommitteePeriodUpdate {
     pub fork_version: ForkVersion,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SyncCommittee {
     // should this be a smallvec???
     pub pubkeys: Vec<PublicKey>,
@@ -180,7 +181,7 @@ pub struct SyncCommitteePeriodUpdate {
 
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
     fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
-        println!("from ssz sync committee period update");
+        tryprintln!("from ssz sync committee period update");
         SyncCommitteePeriodUpdate {
             attested_header: value.attested_header.into(),
             next_sync_committee: value.next_sync_committee.into(),
@@ -199,7 +200,7 @@ impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
 
 impl From<SSZBeaconBlockHeader> for BeaconHeader {
     fn from(value: SSZBeaconBlockHeader) -> Self {
-        println!("from ssz beacon block header");
+        tryprintln!("from ssz beacon block header");
         BeaconHeader {
             slot: value.slot,
             proposer_index: value.proposer_index,
@@ -212,7 +213,7 @@ impl From<SSZBeaconBlockHeader> for BeaconHeader {
 
 impl From<SSZSyncCommittee> for SyncCommittee {
     fn from(value: SSZSyncCommittee) -> Self {
-        println!("from ssz sync committee");
+        tryprintln!("from ssz sync committee");
         SyncCommittee {
             pubkeys: value
                 .pubkeys
@@ -226,7 +227,7 @@ impl From<SSZSyncCommittee> for SyncCommittee {
 
 impl From<SSZSyncAggregate> for SyncAggregate {
     fn from(value: SSZSyncAggregate) -> Self {
-        println!("from ssz sync aggregate");
+        tryprintln!("from ssz sync aggregate");
         SyncAggregate {
             sync_committee_bits: value.sync_committee_bits,
             sync_committee_signature: value.sync_committee_signature.to_vec(),
@@ -239,19 +240,19 @@ pub fn ssz_process_sync_committee_period_update(
     update: Vec<u8>,
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), String> {
-    println!("entry point");
+    tryprintln!("entry point");
     let prev_update: SSZSyncCommitteePeriodUpdate =
         deserialize(&prev_update).map_err(|_e| "Failed to decode previous update".to_string())?;
-    println!("decode 1");
+    tryprintln!("decode 1");
     let update: SSZSyncCommitteePeriodUpdate = SSZSyncCommitteePeriodUpdate::deserialize(&update)
         .map_err(|_| "Failed to decode update")?;
-    println!("decode 2");
+    tryprintln!("decode 2");
 
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
 
     process_sync_committee_period_update(prev_update, update, validators_root)
-        .map_err(|e| format!("failed sync comitte update period: {}", e))
+        .map_err(|_e| "failed sync comitte update period: {}".to_string())
 }
 
 pub fn process_sync_committee_period_update(
@@ -262,9 +263,9 @@ pub fn process_sync_committee_period_update(
     let sync_committee_bits =
         get_sync_committee_bits(update.sync_aggregate.sync_committee_bits.clone())?;
     //     .map_err(|_| DispatchError::Other("Couldn't process sync committee bits"))?;
-    println!("got sync committee bits");
+    tryprintln!("got sync committee bits");
     sync_committee_participation_is_supermajority(sync_committee_bits.clone())?;
-    println!("sync committee participation is supermajority");
+    tryprintln!("sync committee participation is supermajority");
     verify_sync_committee(
         update.next_sync_committee.clone(),
         update.next_sync_committee_branch,
@@ -272,7 +273,7 @@ pub fn process_sync_committee_period_update(
         NEXT_SYNC_COMMITTEE_DEPTH,
         NEXT_SYNC_COMMITTEE_INDEX,
     )?;
-    println!("verified sync committee");
+    tryprintln!("verified sync committee");
     let block_root: H256 = hash_tree_root_beacon_header(update.finalized_header.clone())?.into();
     verify_header(
         block_root,
@@ -320,10 +321,10 @@ fn sync_committee_participation_is_supermajority(
 }
 
 fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>) -> Result<Vec<u8>, String> {
-    // println!("About to deserialize");
+    // tryprintln!("About to deserialize");
     // let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex).unwrap();
         // .map_err(|_e| "DeserializeError".to_string())?;
-    // println!("did deserialize");
+    // tryprintln!("did deserialize");
 
     let result = bitv
         .iter()
