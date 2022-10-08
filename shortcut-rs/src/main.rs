@@ -14,7 +14,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let update = load_hash(&args[2]);
 
     let validators_root = bacon::H256(hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap().try_into().unwrap());
-    bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
+    let (sync_committee, beacon_header) = bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
+
+    println!("{:?}, {:?}", sync_committee, beacon_header);
 
     Ok(())
 }
