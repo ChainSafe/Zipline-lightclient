@@ -1,9 +1,9 @@
 //! # Ethereum Beacon Client
 // #![cfg_attr(not(feature = "std"), no_std)]
 // #![no_std]
-extern crate alloc;
+// extern crate alloc;
 
-use alloc::string::String;
+// use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
 // pub use snowbridge_ethereum::H256;
@@ -12,8 +12,8 @@ pub use ssz_rs::{
 };
 use ssz_rs_derive::SimpleSerialize;
 
-use alloc::vec;
-use alloc::vec::Vec;
+// use alloc::vec;
+// use alloc::vec::Vec;
 // use alloc::format;
 use sha2::{Digest, Sha256};
 
@@ -100,7 +100,7 @@ pub struct BeaconHeader {
 pub struct SyncAggregate {
     // both of these were bounded vecs
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_bytes"))]
-    pub sync_committee_bits: Vec<u8>,
+    pub sync_committee_bits: Bitvector<SYNC_COMMITTEE_SIZE>,
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_bytes"))]
     pub sync_committee_signature: Vec<u8>,
 }
@@ -228,11 +228,7 @@ impl From<SSZSyncAggregate> for SyncAggregate {
     fn from(value: SSZSyncAggregate) -> Self {
         println!("from ssz sync aggregate");
         SyncAggregate {
-            sync_committee_bits: value
-                .sync_committee_bits
-                .iter()
-                .map(|v| if *v { 1_u8 } else { 0_u8 })
-                .collect(),
+            sync_committee_bits: value.sync_committee_bits,
             sync_committee_signature: value.sync_committee_signature.to_vec(),
         }
     }
@@ -323,9 +319,11 @@ fn sync_committee_participation_is_supermajority(
     }
 }
 
-fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, String> {
-    let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex)
-        .map_err(|_e| "DeserializeError: {}".to_string())?;
+fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>) -> Result<Vec<u8>, String> {
+    // println!("About to deserialize");
+    // let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex).unwrap();
+        // .map_err(|_e| "DeserializeError".to_string())?;
+    // println!("did deserialize");
 
     let result = bitv
         .iter()
