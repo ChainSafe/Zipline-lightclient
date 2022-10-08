@@ -17,7 +17,7 @@ const API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 
 const INPUT_DIRECTORY = "../preimage-cache";
 
-const EMULATOR_CMD = "go run mipsevm";
+const EMULATOR_CMD = "cd ../cannon/mipsevm && go run main.go";
 
 ///
 
