@@ -68,8 +68,8 @@ contract Challenge {
     mapping(uint256 => bytes32) defendedState;
     // Address of the challenger.
     address payable challenger;
-    // Block number preceding the challenged block.
-    uint256 blockNumberN;
+    // The prior finalized block hash that the challenger agrees is ok
+    bytes32 finalizedBlockRoot;
   }
 
   /// @notice ID if the last created challenged, incremented for new challenge IDs.
@@ -89,7 +89,7 @@ contract Challenge {
   /// to the next one. This can only be called by the owner/sequencer and adds
   /// a new pendingBlockRoot
   function updatePeriod(
-    bytes lightClientUpdate, bytes32 assertedFinalizedBlockRoot,
+    bytes calldata _lightClientUpdate, bytes32 assertedFinalizedBlockRoot
   )
   external
   {
@@ -103,13 +103,14 @@ contract Challenge {
   }
 
 
-  /// @param The serialized data that the execution requires to do the verification
+  /// @param lightClientUpdate The serialized data that the execution requires to do the verification
+  /// @param assertedFinalizedBlockRoot The serialized data that the execution requires to do the verification
   /// @param finalSystemState The state hash of the fault proof program's final MIPS state.
   /// @param stepCount The number of steps (MIPS instructions) taken to execute the fault proof
   ///        program.
   /// @return The challenge identifier
   function initiateChallenge(
-    bytes lightClientUpdate, bytes32 assertedFinalizedBlockRoot,
+    bytes calldata lightClientUpdate, bytes32 assertedFinalizedBlockRoot,
       bytes32 finalSystemState, uint256 stepCount)
     external
     returns (uint256)
@@ -131,15 +132,15 @@ contract Challenge {
         "the final MIPS machine state is not stopped (PC != 0x5EAD0000)");
     require(mem.ReadMemory(finalSystemState, 0x30000800) == 0x1337f00d,
         "the final state root has not been written a the predefined MIPS memory location");
-    require(mem.ReadBytes32(finalSystemState, 0x30000804) == assertionRoot,
-        "the final MIPS machine state asserts a different state root than your challenge");
+    require(mem.ReadMemory(finalSystemState, 0x30000804) == 0xffffffff,
+        "the final MIPS machine state has not written true (0xffffffff) into the designated location");
 
     uint256 challengeId = lastChallengeId++;
     ChallengeData storage c = challenges[challengeId];
 
     // A NEW CHALLENGER APPEARS
     c.challenger = msg.sender;
-    c.blockNumberN = blockNumberN;
+    c.finalizedBlockRoot = finalizedBlockRoot;
     c.assertedState[0] = startState;
     c.defendedState[0] = startState;
     c.assertedState[stepCount] = finalSystemState;
