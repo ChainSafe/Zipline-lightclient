@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 linked_list_allocator = "0.10.3"
 rlibc = "1.0.0"
+bacon = { path = "../bacon" }
 
 [build-dependencies]
 cc = "*"

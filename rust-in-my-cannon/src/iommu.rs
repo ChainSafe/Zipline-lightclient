@@ -2,13 +2,11 @@
 //! environment. The host environment is either the prover or the onchain one step verifier.
 
 use super::H256;
-use std::collections::BTreeMap;
+use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use core::ptr;
 
 /// The address of the input hash.
-const PTR_INPUT_HASH_A: usize = 0x30000000;
-const PTR_INPUT_HASH_B: usize = 0x30000020;
-
+const PTR_INPUT_HASH: usize = 0x30000000;
 /// The address where the output hash is written at the end of execution.
 const PTR_OUTPUT_HASH: usize = 0x30000804;
 /// The address where a special magic value is written at the end of execution.
@@ -21,13 +19,8 @@ const PTR_PREIMAGE_ORACLE_SIZE: usize = 0x31000000;
 const PTR_PREIMAGE_ORACLE_DATA: usize = 0x31000004;
 
 /// Loads the input hash from the host environment.
-pub fn input_hash_A() -> H256 {
-    unsafe { ptr::read_volatile(PTR_INPUT_HASH_A as *const [u8; 32]) }
-}
-
-/// Loads the input hash from the host environment.
-pub fn input_hash_AB() -> H256 {
-    unsafe { ptr::read_volatile(PTR_INPUT_HASH_B as *const [u8; 32]) }
+pub fn input_hash() -> H256 {
+    unsafe { ptr::read_volatile(PTR_INPUT_HASH as *const [u8; 32]) }
 }
 
 /// Prepares the guest envrionment to exiting. Writes the output hash and the magic to be read by
@@ -92,7 +85,6 @@ pub fn preimage(hash: H256) -> Option<&'static [u8]> {
             core::slice::from_raw_parts(PTR_PREIMAGE_ORACLE_DATA as *const u8, size as usize)
                 .to_vec();
 
-        // do we really have to do this?
         // if arbitrary_state_machine::keccak256(&preimage) != hash {
         //     panic!("preimage oracle returned invalid preimage");
         // }
