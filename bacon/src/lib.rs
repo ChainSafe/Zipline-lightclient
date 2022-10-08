@@ -2,6 +2,7 @@
 // #![cfg_attr(not(feature = "std"), no_std)]
 #![no_std]
 extern crate alloc;
+use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
 // pub use snowbridge_ethereum::H256;
@@ -12,20 +13,23 @@ use ssz_rs_derive::SimpleSerialize;
 
 use alloc::vec;
 use alloc::vec::Vec;
+use alloc::format;
 use sha2::{Digest, Sha256};
 
 pub type ForkVersion = [u8; 4];
-const SYNC_COMMITTEE_SIZE: usize = 32;
 pub const PUBKEY_SIZE: usize = 48;
 pub const SIGNATURE_SIZE: usize = 96;
 pub const NEXT_SYNC_COMMITTEE_DEPTH: u64 = 5;
 pub const NEXT_SYNC_COMMITTEE_INDEX: u64 = 23;
 pub const FINALIZED_ROOT_DEPTH: u64 = 6;
 pub const FINALIZED_ROOT_INDEX: u64 = 41;
-pub const SLOTS_PER_EPOCH: u64 = 8;
-pub const EPOCHS_PER_SYNC_COMMITTEE_PERIOD: u64 = 8;
 pub const DOMAIN_SYNC_COMMITTEE: [u8; 4] = [7, 0, 0, 0];
 pub const GENESIS_FORK_VERSION: ForkVersion = [30, 30, 30, 30];
+
+pub const SLOTS_PER_EPOCH: u64 = 32;
+pub const EPOCHS_PER_SYNC_COMMITTEE_PERIOD: u64 = 256;
+pub const SYNC_COMMITTEE_SIZE: usize = 512;
+pub const IS_MINIMAL: bool = false;
 
 pub type Domain = H256;
 pub type Root = H256;
@@ -227,18 +231,18 @@ pub fn ssz_process_sync_committee_period_update(
     prev_update: Vec<u8>,
     update: Vec<u8>,
     validators_root: H256,
-) -> Result<(SyncCommittee, BeaconHeader), &'static str> {
+) -> Result<(SyncCommittee, BeaconHeader), String> {
     let prev_update: SSZSyncCommitteePeriodUpdate = deserialize(
         &prev_update,
     )
-    .map_err(|_| "Failed to decode previous update")?;
+    .map_err(|e| format!("Failed to decode previous update: {}", e))?;
     let update: SSZSyncCommitteePeriodUpdate =
         SSZSyncCommitteePeriodUpdate::deserialize(&update)
             .map_err(|_| "Failed to decode update")?;
 
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
-    process_sync_committee_period_update(prev_update, update, validators_root)
+    process_sync_committee_period_update(prev_update, update, validators_root).map_err(|e| format!("{}", e))
 }
 
 
