@@ -14,7 +14,7 @@ use ssz_rs_derive::SimpleSerialize;
 
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::format;
+// use alloc::format;
 use sha2::{Digest, Sha256};
 
 pub type ForkVersion = [u8; 4];
@@ -36,7 +36,9 @@ pub type Domain = H256;
 pub type Root = H256;
 
 #[cfg(feature = "no-println")]
-macro_rules! println { ($body:expr) => {  } }
+macro_rules! println {
+    ($body:expr) => {};
+}
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct H256(pub [u8; 32]);
@@ -182,7 +184,11 @@ impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
         SyncCommitteePeriodUpdate {
             attested_header: value.attested_header.into(),
             next_sync_committee: value.next_sync_committee.into(),
-            next_sync_committee_branch: value.next_sync_committee_branch.iter().map(|v| H256(*v)).collect(),
+            next_sync_committee_branch: value
+                .next_sync_committee_branch
+                .iter()
+                .map(|v| H256(*v))
+                .collect(),
             finalized_header: value.finalized_header.into(),
             finality_branch: value.finality_branch.iter().map(|v| H256(*v)).collect(),
             sync_aggregate: value.sync_aggregate.into(),
@@ -238,22 +244,19 @@ pub fn ssz_process_sync_committee_period_update(
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), String> {
     println!("entry point");
-    let prev_update: SSZSyncCommitteePeriodUpdate = deserialize(
-        &prev_update,
-    )
-    .map_err(|e| format!("Failed to decode previous update: {}", e))?;
+    let prev_update: SSZSyncCommitteePeriodUpdate =
+        deserialize(&prev_update).map_err(|_e| "Failed to decode previous update".to_string())?;
     println!("decode 1");
-    let update: SSZSyncCommitteePeriodUpdate =
-        SSZSyncCommitteePeriodUpdate::deserialize(&update)
-            .map_err(|_| "Failed to decode update")?;
+    let update: SSZSyncCommitteePeriodUpdate = SSZSyncCommitteePeriodUpdate::deserialize(&update)
+        .map_err(|_| "Failed to decode update")?;
     println!("decode 2");
 
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
 
-    process_sync_committee_period_update(prev_update, update, validators_root).map_err(|e| format!("{}", e))
+    process_sync_committee_period_update(prev_update, update, validators_root)
+        .map_err(|e| format!("failed sync comitte update period: {}", e))
 }
-
 
 pub fn process_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,
@@ -322,7 +325,7 @@ fn sync_committee_participation_is_supermajority(
 
 fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, String> {
     let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex)
-        .map_err(|e| format!("DeserializeError: {}", e))?;
+        .map_err(|_e| "DeserializeError: {}".to_string())?;
 
     let result = bitv
         .iter()
@@ -428,9 +431,7 @@ fn hash_tree_root_beacon_header(beacon_header: BeaconHeader) -> Result<[u8; 32],
     hash_tree_root(get_ssz_beacon_header(beacon_header)?)
 }
 
-fn get_ssz_beacon_header(
-    beacon_header: BeaconHeader,
-) -> Result<SSZBeaconBlockHeader, String> {
+fn get_ssz_beacon_header(beacon_header: BeaconHeader) -> Result<SSZBeaconBlockHeader, String> {
     Ok(SSZBeaconBlockHeader {
         slot: beacon_header.slot,
         proposer_index: beacon_header.proposer_index,
