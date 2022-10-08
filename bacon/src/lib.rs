@@ -20,7 +20,6 @@ pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
 
-use alloc::vec::Vec;
 use alloc::string::String;
 use crate::alloc::string::ToString;
 
@@ -32,8 +31,8 @@ macro_rules! tryprintln {
 }
 
 pub fn ssz_process_sync_committee_period_update(
-    prev_update: Vec<u8>,
-    update: Vec<u8>,
+    prev_update: &[u8],
+    update: &[u8],
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), String> {
     tryprintln!("entry point");
