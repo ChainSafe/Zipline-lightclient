@@ -63,11 +63,12 @@ async function main(): Promise<void> {
     )
   );
 
-  console.log(`calling emulator`);
+  const shellCmdStr = `${EMULATOR_CMD} ${inputs
+    .map((input) => input.updateHash)
+    .join(" ")}`;
+  console.log(`calling emulator`, shellCmdStr);
 
-  const out = shell(
-    `${EMULATOR_CMD} ${inputs.map((input) => input.updateHash).join(" ")}`
-  ).split(" ");
+  const out = shell(shellCmdStr).split(" ");
 }
 
 main();
