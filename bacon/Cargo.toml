@@ -1,0 +1,33 @@
+[package]
+name = "bacon"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+milagro_bls = { git = "https://github.com/Snowfork/milagro_bls", default-features = false }
+ssz-rs = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev="8d497a949c320577aa1f741eb9f2958191df905b" }
+ssz-rs-derive = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev="8d497a949c320577aa1f741eb9f2958191df905b" }
+byte-slice-cast = { version = "1.2.1", default-features = false }
+rlp = { version = "0.5", default-features = false }
+hex-literal = { version = "0.3.1", optional = true }
+serde = { version = "1.0.137", optional = true }
+
+snowbridge-ethereum = { path = "/Users/erictu/snowbridge/parachain/primitives/ethereum", default-features = false }
+snowbridge-beacon-primitives = { path = "/Users/erictu/snowbridge/parachain/primitives/beacon", default-features = false }
+
+
+sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25", default-features = false }
+
+[features]
+minimal = []
+default = ["std"]
+std = [
+    "serde",
+    "snowbridge-ethereum/std",
+    "snowbridge-beacon-primitives/std",
+    "milagro_bls/std",
+    "ssz-rs/std",
+    "byte-slice-cast/std"
+]
