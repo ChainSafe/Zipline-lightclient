@@ -3,6 +3,7 @@
 #![no_std]
 extern crate alloc;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
+use ssz_rs::deserialize;
 // pub use snowbridge_ethereum::H256;
 pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
@@ -168,6 +169,87 @@ pub struct SyncCommitteePeriodUpdate {
     pub fork_version: ForkVersion,
     pub sync_committee_period: u64,
 }
+
+// impl From<SyncCommitteePeriodUpdate> for SSZSyncCommitteePeriodUpdate {
+//     fn from(value: SyncCommitteePeriodUpdate) -> Self {
+//         SSZSyncCommitteePeriodUpdate { attested_header:v, next_sync_committee: (), next_sync_committee_branch: (), finalized_header: (), finality_branch: (), sync_aggregate: (), fork_version: (), sync_committee_period: () }
+//     }
+// }
+
+impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
+    fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
+        todo!()
+    }
+}
+
+impl From<SSZBeaconBlockHeader> for BeaconHeader {
+    fn from(value: SSZBeaconBlockHeader) -> Self {
+        BeaconHeader {
+            slot: value.slot,
+            proposer_index: value.proposer_index,
+            parent_root: value.parent_root.into(),
+            state_root: value.state_root.into(),
+            body_root: value.body_root.into(),
+        }
+    }
+}
+
+impl From<SSZSyncCommittee> for SyncCommittee {
+    fn from(value: SSZSyncCommittee) -> Self {
+        SyncCommittee {
+            pubkeys: value
+                .pubkeys
+                .iter()
+                .map(|pk| {
+                    PublicKey(pk[..48].try_into().unwrap())
+                })
+                .collect(),
+            aggregate_pubkey: PublicKey(value.aggregate_pubkey[..48].try_into().unwrap()),
+        }
+    }
+}
+
+impl From<SSZSyncAggregate> for SyncAggregate {
+    fn from(value: SSZSyncAggregate) -> Self {
+        SyncAggregate {
+            sync_committee_bits: value.sync_committee_bits.to_bytes(),
+            sync_committee_signature: value.sync_committee_signature.to_bytes(),
+        }
+    }
+}
+
+// impl From<BeaconHeader> for SSZBeaconBlockHeader {
+//     fn from(header: BeaconHeader) -> Self {
+//         SSZBeaconBlockHeader {
+//             slot: header.slot,
+//             proposer_index: header.proposer_index,
+//             parent_root: header.parent_root.0,
+//             state_root: header.state_root.0,
+//             body_root: header.body_root.0,
+//         }
+//     }
+// }
+// impl From<SyncCommittee> for SSZSyncCommittee {
+//     fn from(committee: SyncCommittee) -> Self {
+//         SSZSyncCommittee {
+//             pubkeys: committee
+//                 .pubkeys
+//                 .iter()
+//                 .map(|pk| pk.0.to_vec().into())
+//                 .collect(),
+//             aggregate_pubkey: committee.aggregate_pubkey.0.to_vec().into(),
+//         }
+//     }
+// }
+
+// impl From<SyncAggregate> for SSZSyncAggregate {
+//     fn from(aggregate: SyncAggregate) -> Self {
+//         SSZSyncAggregate {
+//             sync_committee_bits: aggregate.sync_committee_bits.into(),
+//             sync_committee_signature: aggregate.sync_committee_signature.into(),
+//         }
+//     }
+// }
 
 pub fn process_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,
