@@ -178,7 +178,16 @@ pub struct SyncCommitteePeriodUpdate {
 
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
     fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
-        todo!()
+        SyncCommitteePeriodUpdate {
+            attested_header: value.attested_header.into(),
+            next_sync_committee: value.next_sync_committee.into(),
+            next_sync_committee_branch: value.next_sync_committee_branch.iter().map(|v| H256(*v)).collect(),
+            finalized_header: value.finalized_header.into(),
+            finality_branch: value.finality_branch.iter().map(|v| H256(*v)).collect(),
+            sync_aggregate: value.sync_aggregate.into(),
+            fork_version: value.fork_version,
+            sync_committee_period: value.sync_committee_period,
+        }
     }
 }
 
@@ -200,9 +209,7 @@ impl From<SSZSyncCommittee> for SyncCommittee {
             pubkeys: value
                 .pubkeys
                 .iter()
-                .map(|pk| {
-                    PublicKey(pk[..48].try_into().unwrap())
-                })
+                .map(|pk| PublicKey(pk[..48].try_into().unwrap()))
                 .collect(),
             aggregate_pubkey: PublicKey(value.aggregate_pubkey[..48].try_into().unwrap()),
         }
@@ -212,13 +219,17 @@ impl From<SSZSyncCommittee> for SyncCommittee {
 impl From<SSZSyncAggregate> for SyncAggregate {
     fn from(value: SSZSyncAggregate) -> Self {
         SyncAggregate {
-            sync_committee_bits: value.sync_committee_bits.to_bytes(),
-            sync_committee_signature: value.sync_committee_signature.to_bytes(),
+            sync_committee_bits: value
+                .sync_committee_bits
+                .iter()
+                .map(|v| if *v { 1_u8 } else { 0_u8 })
+                .collect(),
+            sync_committee_signature: value.sync_committee_signature.to_vec(),
         }
     }
 }
 
-// impl From<BeaconHeader> for SSZBeaconBlockHeader {
+// impl From<BeaconHeader> for SSZBeaco(nBlockHeader {
 //     fn from(header: BeaconHeader) -> Self {
 //         SSZBeaconBlockHeader {
 //             slot: header.slot,
