@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .unwrap(),
     );
     let (_sync_committee, _beacon_header) =
-        bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
+        bacon::ssz_process_sync_committee_period_update(&prev_update, &update, validators_root)?;
 
     // println!("{:?}, {:?}", sync_committee, beacon_header);
     let mut stdout = std::io::stdout().lock();

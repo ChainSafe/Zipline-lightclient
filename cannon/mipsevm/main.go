@@ -101,7 +101,7 @@ func main() {
 		// write the inputs into Unicorn memory
 
 		inputHashA, err := hex.DecodeString("e4c2cee3a9455c2b7c0449152a8c7e1a7b811353e4ea2c1dbe1cbe0c790b45f7")
-		inputHashB, err := hex.DecodeString("78ae69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85")
+		inputHashB, err := hex.DecodeString("dead69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85")
 
 		if err != nil {
 			log.Fatal(err)
