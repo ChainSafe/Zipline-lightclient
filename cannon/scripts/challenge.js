@@ -15,7 +15,7 @@ async function main() {
   const finalizedHash = output.slice(64, 96);
   const update = output.slice(96);
 
-  let args = [update, finalizedHash, finalSystemState, step]
+  let args = [finalSystemState, step]
   let cdat = c.interface.encodeFunctionData("initiateChallenge", args)
   let nodes = await getTrieNodesForCall(c, c.address, cdat, preimages)
 
