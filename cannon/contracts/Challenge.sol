@@ -48,8 +48,6 @@ contract Challenge {
   /// @notice State hash of the fault proof program's initial MIPS state.
   bytes32 public immutable globalStartState;
 
-  uint256 constant challengeDurationBlocks = 100;
-
   constructor(IMIPS _mips, bytes32 _globalStartState) {
     owner = msg.sender;
     mips = _mips;
@@ -81,46 +79,82 @@ contract Challenge {
   /// @notice Emitted when a new challenge is created.
   event ChallengeCreated(uint256 challengeId);
 
-  bytes32 public finalizedBlockRoot;
-  bytes32 public pendingBlockRoot;
-  uint256 public finalizedAt;
+  struct UpdateSubmission {
+    /// merkle root of the beacon block header
+    bytes32 blockRoot;
+    /// keccak of the light client update
+    bytes32 updateHash;
+    /// block number of the submission
+    uint256 blockNumber;
+  }
+
+  bytes32 public finalizedSubmission;
+  bytes32 public pendingSubmission;
+
+  /// Timestamp after which the current submission is no longer considered pending
+  uint256 public challengeFinishTimestamp;
+  /// Duration in seconds to challenge a pending update
+  uint256 constant challengeDuration = 100;
+
 
   /// Called for every new period to migrate the previous finalized header root
   /// to the next one. This can only be called by the owner/sequencer and adds
   /// a new pendingBlockRoot
   function updatePeriod(
-    bytes calldata _lightClientUpdate, bytes32 assertedFinalizedBlockRoot
+    bytes calldata lightClientUpdate, bytes32 assertedFinalizedBlockRoot
   )
   external
   {
     require(msg.sender == owner, "Only the sequencer can submit new updates");
-    require(block.number < finalizedAt, "Can only have one pending submission at a time");
-    // the prior pending one is now finalized!
-    finalizedBlockRoot = pendingBlockRoot;
-    // assert a new root as pending with a timeout
-    pendingBlockRoot = assertedFinalizedBlockRoot;
-    finalizedAt = block.number + challengeDurationBlocks;
+    finalizePendingSubmission();
+
+    challengeFinishTimestamp = block.timestamp + challengeDuration;
+    pendingSubmission = UpdateSubmission(
+      assertedFinalizedBlockRoot,
+      keccak256(lightClientUpdate),
+      block.number
+    );
   }
 
+  function finalizePendingSubmission() external {
+    require(block.timestamp >= challengeFinishTimestamp, "Cannot finalize a pending update before the challenge timeout is finished");
+    // the prior pending one is now finalized!
+    if (pendingSubmission.blockRoot != bytes32(0x0)) {
+      finalizedSubmission = pendingSubmission;
+    }
+  }
 
-  /// @param lightClientUpdate The serialized data that the execution requires to do the verification
-  /// @param assertedFinalizedBlockRoot The serialized data that the execution requires to do the verification
+  function currentSubmission() public view returns (UpdateSubmission) {
+    if (block.timestamp < challengeFinishTimestamp) {
+      return finalizedSubmission;
+    } else {
+      return pendingSubmission;
+    }
+  }
+
+  function currentBlockNumber() public view returns (uint256) {
+    return currentSubmission().blockNumber;
+  }
+
+  function currentBlockRoot() public view returns (bytes32) {
+    return currentSubmission().blockRoot;
+  }
+
   /// @param finalSystemState The state hash of the fault proof program's final MIPS state.
   /// @param stepCount The number of steps (MIPS instructions) taken to execute the fault proof
   ///        program.
   /// @return The challenge identifier
   function initiateChallenge(
-    bytes calldata lightClientUpdate, bytes32 assertedFinalizedBlockRoot,
-      bytes32 finalSystemState, uint256 stepCount)
-    external
-    returns (uint256)
+      bytes32 finalSystemState, uint256 stepCount
+  )
+  external
+  returns (uint256)
   {
-    // grab the last input hash that was cached then the previous thing was made valid
-    bytes32 previousInputHash = finalizedBlockRoot;
+    require(block.timestamp < challengeFinishTimestamp, "Can only submit a challenge while the latest update is pending");
 
-    // hash the input light client update to pass
-    // to allow the pre-image oracle to retrieve it later
-    bytes32 inputHash = keccak256(lightClientUpdate);
+    // grab the finalized and pending input hashes
+    bytes32 previousInputHash = finalizedSubmission.updateHash;
+    bytes32 inputHash = pendingSubmission.updateHash;
 
     // Write input hash at predefined memory address.
     bytes32 startState = globalStartState;
@@ -271,6 +305,10 @@ contract Challenge {
     // pay out bounty!!
     (bool sent, ) = c.challenger.call{value: address(this).balance}("");
     require(sent, "Failed to send Ether");
+
+    // wipe out pending update since its been proven invalid
+    challengeFinishTimestamp = block.timestamp;
+    pendingSubmission.blockRoot = bytes32(0x0);
 
     emit ChallengerWins(challengeId);
   }
