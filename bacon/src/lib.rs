@@ -6,6 +6,9 @@ extern crate alloc;
 
 pub mod update_sync_committee;
 pub mod types;
+pub mod finalized_header;
+pub mod utils;
+
 pub use types::*;
 pub use update_sync_committee::*;
 // use alloc::string::String;
@@ -21,17 +24,11 @@ use alloc::string::String;
 use crate::alloc::string::ToString;
 
 
-
-
 macro_rules! tryprintln {
     ($body:expr) => {
         // println!(body)
     };
 }
-
-
-
-
 
 pub fn ssz_process_sync_committee_period_update(
     prev_update: Vec<u8>,

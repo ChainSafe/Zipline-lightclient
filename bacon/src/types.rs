@@ -175,6 +175,14 @@ pub struct SyncCommitteePeriodUpdate {
     pub fork_version: ForkVersion,
 }
 
+pub struct FinalizedHeaderUpdate  {
+	pub attested_header: BeaconHeader,
+	pub finalized_header: BeaconHeader,
+	pub finality_branch: Vec<H256>,
+	pub sync_aggregate: SyncAggregate,
+	pub fork_version: ForkVersion,
+}
+
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
     fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
         tryprintln!("from ssz sync committee period update");

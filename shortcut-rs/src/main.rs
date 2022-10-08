@@ -1,8 +1,8 @@
-use std::io::Write;
 use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 
 const PREIMAGE_CACHE_DIR: &str = "../preimage-cache";
 
@@ -15,8 +15,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let prev_update = load_hash(&args[1]);
     let update = load_hash(&args[2]);
 
-    let validators_root = bacon::H256(hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap().try_into().unwrap());
-    let (_sync_committee, _beacon_header) = bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
+    let validators_root = bacon::H256(
+        hex::decode(VALIDATORS_ROOT_HEX_STR)
+            .unwrap()
+            .try_into()
+            .unwrap(),
+    );
+    let (_sync_committee, _beacon_header) =
+        bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
 
     // println!("{:?}, {:?}", sync_committee, beacon_header);
     let mut stdout = std::io::stdout().lock();
