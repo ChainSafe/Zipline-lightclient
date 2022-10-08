@@ -2,7 +2,9 @@
   "include": ["src"],
   "compilerOptions": {
     "module": "ESNext",
+    "outDir": "dist",
     "moduleResolution": "Node",
-    "lib": ["ESNext"]
+    "lib": ["ESNext"],
+    "allowSyntheticDefaultImports": true
   }
 }
