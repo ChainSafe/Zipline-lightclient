@@ -34,7 +34,7 @@ function getEmulatorInput(update: altair.LightClientUpdate): {
   updateHash: string;
 } {
   const serialized = ssz.altair.LightClientUpdate.serialize(update);
-  const hash = utils.keccak256(serialized).slice(2);
+  const hash = utils.keccak256(serialized);
   return { update: serialized, updateHash: hash };
 }
 
