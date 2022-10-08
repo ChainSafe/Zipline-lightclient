@@ -170,12 +170,6 @@ pub struct SyncCommitteePeriodUpdate {
     pub sync_committee_period: u64,
 }
 
-// impl From<SyncCommitteePeriodUpdate> for SSZSyncCommitteePeriodUpdate {
-//     fn from(value: SyncCommitteePeriodUpdate) -> Self {
-//         SSZSyncCommitteePeriodUpdate { attested_header:v, next_sync_committee: (), next_sync_committee_branch: (), finalized_header: (), finality_branch: (), sync_aggregate: (), fork_version: (), sync_committee_period: () }
-//     }
-// }
-
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
     fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
         SyncCommitteePeriodUpdate {
@@ -229,38 +223,24 @@ impl From<SSZSyncAggregate> for SyncAggregate {
     }
 }
 
-// impl From<BeaconHeader> for SSZBeaco(nBlockHeader {
-//     fn from(header: BeaconHeader) -> Self {
-//         SSZBeaconBlockHeader {
-//             slot: header.slot,
-//             proposer_index: header.proposer_index,
-//             parent_root: header.parent_root.0,
-//             state_root: header.state_root.0,
-//             body_root: header.body_root.0,
-//         }
-//     }
-// }
-// impl From<SyncCommittee> for SSZSyncCommittee {
-//     fn from(committee: SyncCommittee) -> Self {
-//         SSZSyncCommittee {
-//             pubkeys: committee
-//                 .pubkeys
-//                 .iter()
-//                 .map(|pk| pk.0.to_vec().into())
-//                 .collect(),
-//             aggregate_pubkey: committee.aggregate_pubkey.0.to_vec().into(),
-//         }
-//     }
-// }
+pub fn ssz_process_sync_committee_period_update(
+    prev_update: Vec<u8>,
+    update: Vec<u8>,
+    validators_root: H256,
+) -> Result<(SyncCommittee, BeaconHeader), &'static str> {
+    let prev_update: SSZSyncCommitteePeriodUpdate = deserialize(
+        &prev_update,
+    )
+    .map_err(|_| "Failed to decode previous update")?;
+    let update: SSZSyncCommitteePeriodUpdate =
+        SSZSyncCommitteePeriodUpdate::deserialize(&update)
+            .map_err(|_| "Failed to decode update")?;
 
-// impl From<SyncAggregate> for SSZSyncAggregate {
-//     fn from(aggregate: SyncAggregate) -> Self {
-//         SSZSyncAggregate {
-//             sync_committee_bits: aggregate.sync_committee_bits.into(),
-//             sync_committee_signature: aggregate.sync_committee_signature.into(),
-//         }
-//     }
-// }
+    let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
+    let update = SyncCommitteePeriodUpdate::from(update);
+    process_sync_committee_period_update(prev_update, update, validators_root)
+}
+
 
 pub fn process_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,
