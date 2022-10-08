@@ -80,22 +80,41 @@ contract Challenge {
   event ChallengeCreated(uint256 challengeId);
 
   struct UpdateSubmission {
-    /// merkle root of the beacon block header
+    // merkle root of the beacon block header
     bytes32 blockRoot;
-    /// keccak of the light client update
+    // keccak of the light client update
     bytes32 updateHash;
-    /// block number of the submission
+    // block number of the submission
     uint256 blockNumber;
   }
 
-  bytes32 public finalizedSubmission;
-  bytes32 public pendingSubmission;
+  /// latest finalized submission
+  UpdateSubmission public finalizedSubmission;
+  /// latest pending submission
+  UpdateSubmission public pendingSubmission;
 
   /// Timestamp after which the current submission is no longer considered pending
   uint256 public challengeFinishTimestamp;
-  /// Duration in seconds to challenge a pending update
+  // Duration in seconds to challenge a pending update
   uint256 constant challengeDuration = 100;
 
+  function finalizePendingSubmission() public {
+    require(block.timestamp >= challengeFinishTimestamp, "Cannot finalize a pending update before the challenge timeout is finished");
+    // the prior pending one is now finalized!
+    if (pendingSubmission.blockRoot != bytes32(0x0)) {
+      finalizedSubmission = pendingSubmission;
+    }
+  }
+
+  function updatePeriodInitial(
+    bytes calldata lightClientUpdate, bytes32 assertedFinalizedBlockRoot
+  ) private {
+    finalizedSubmission = UpdateSubmission(
+      assertedFinalizedBlockRoot,
+      keccak256(lightClientUpdate),
+      block.number
+    );
+  }
 
   /// Called for every new period to migrate the previous finalized header root
   /// to the next one. This can only be called by the owner/sequencer and adds
@@ -106,6 +125,13 @@ contract Challenge {
   external
   {
     require(msg.sender == owner, "Only the sequencer can submit new updates");
+
+    // write a trusted sync period the first time
+    if (finalizedSubmission.blockRoot != bytes32(0x0)) {
+      updatePeriodInitial(lightClientUpdate, assertedFinalizedBlockRoot);
+      return;
+    }
+
     finalizePendingSubmission();
 
     challengeFinishTimestamp = block.timestamp + challengeDuration;
@@ -116,15 +142,7 @@ contract Challenge {
     );
   }
 
-  function finalizePendingSubmission() external {
-    require(block.timestamp >= challengeFinishTimestamp, "Cannot finalize a pending update before the challenge timeout is finished");
-    // the prior pending one is now finalized!
-    if (pendingSubmission.blockRoot != bytes32(0x0)) {
-      finalizedSubmission = pendingSubmission;
-    }
-  }
-
-  function currentSubmission() public view returns (UpdateSubmission) {
+  function currentSubmission() public view returns (UpdateSubmission memory) {
     if (block.timestamp < challengeFinishTimestamp) {
       return finalizedSubmission;
     } else {
@@ -174,7 +192,7 @@ contract Challenge {
 
     // A NEW CHALLENGER APPEARS
     c.challenger = msg.sender;
-    c.finalizedBlockRoot = finalizedBlockRoot;
+    c.finalizedBlockRoot = finalizedSubmission.blockRoot;
     c.assertedState[0] = startState;
     c.defendedState[0] = startState;
     c.assertedState[stepCount] = finalSystemState;
