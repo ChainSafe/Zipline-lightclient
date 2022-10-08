@@ -6,8 +6,6 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint src --ext .ts",
-    "submit-update": "ts-node-esm src/index.ts",
-    "submit-challenge": "ts-node-esm src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^18.8.3",
