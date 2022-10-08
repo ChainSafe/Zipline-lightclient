@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::error::Error;
 use std::env;
 use std::fs::File;
@@ -14,9 +15,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let update = load_hash(&args[2]);
 
     let validators_root = bacon::H256(hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap().try_into().unwrap());
-    let (sync_committee, beacon_header) = bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
+    let (_sync_committee, _beacon_header) = bacon::ssz_process_sync_committee_period_update(prev_update, update, validators_root)?;
 
-    println!("{:?}, {:?}", sync_committee, beacon_header);
+    // println!("{:?}, {:?}", sync_committee, beacon_header);
+    let mut stdout = std::io::stdout().lock();
+
+    // write 64 bytes to std-out for testing purposes
+    stdout.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
+    stdout.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
 
     Ok(())
 }
