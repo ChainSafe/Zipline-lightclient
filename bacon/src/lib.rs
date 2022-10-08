@@ -1,7 +1,8 @@
 //! # Ethereum Beacon Client
 // #![cfg_attr(not(feature = "std"), no_std)]
-#![no_std]
+// #![no_std]
 extern crate alloc;
+
 use alloc::string::String;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use ssz_rs::deserialize;
@@ -17,6 +18,7 @@ use alloc::format;
 use sha2::{Digest, Sha256};
 
 pub type ForkVersion = [u8; 4];
+pub const SYNC_COMMITTEE_SIZE: usize = 512;
 pub const PUBKEY_SIZE: usize = 48;
 pub const SIGNATURE_SIZE: usize = 96;
 pub const NEXT_SYNC_COMMITTEE_DEPTH: u64 = 5;
@@ -28,7 +30,6 @@ pub const GENESIS_FORK_VERSION: ForkVersion = [30, 30, 30, 30];
 
 pub const SLOTS_PER_EPOCH: u64 = 32;
 pub const EPOCHS_PER_SYNC_COMMITTEE_PERIOD: u64 = 256;
-pub const SYNC_COMMITTEE_SIZE: usize = 512;
 pub const IS_MINIMAL: bool = false;
 
 pub type Domain = H256;
@@ -151,7 +152,6 @@ pub struct SSZSyncCommitteePeriodUpdate {
     pub sync_aggregate: SSZSyncAggregate,
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_fork_version"))]
     pub fork_version: ForkVersion,
-    pub sync_committee_period: u64,
 }
 
 #[derive(Clone)]
@@ -171,11 +171,11 @@ pub struct SyncCommitteePeriodUpdate {
     pub sync_aggregate: SyncAggregate,
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_fork_version"))]
     pub fork_version: ForkVersion,
-    pub sync_committee_period: u64,
 }
 
 impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
     fn from(value: SSZSyncCommitteePeriodUpdate) -> Self {
+        println!("from ssz sync committee period update");
         SyncCommitteePeriodUpdate {
             attested_header: value.attested_header.into(),
             next_sync_committee: value.next_sync_committee.into(),
@@ -184,13 +184,13 @@ impl From<SSZSyncCommitteePeriodUpdate> for SyncCommitteePeriodUpdate {
             finality_branch: value.finality_branch.iter().map(|v| H256(*v)).collect(),
             sync_aggregate: value.sync_aggregate.into(),
             fork_version: value.fork_version,
-            sync_committee_period: value.sync_committee_period,
         }
     }
 }
 
 impl From<SSZBeaconBlockHeader> for BeaconHeader {
     fn from(value: SSZBeaconBlockHeader) -> Self {
+        println!("from ssz beacon block header");
         BeaconHeader {
             slot: value.slot,
             proposer_index: value.proposer_index,
@@ -203,6 +203,7 @@ impl From<SSZBeaconBlockHeader> for BeaconHeader {
 
 impl From<SSZSyncCommittee> for SyncCommittee {
     fn from(value: SSZSyncCommittee) -> Self {
+        println!("from ssz sync committee");
         SyncCommittee {
             pubkeys: value
                 .pubkeys
@@ -216,6 +217,7 @@ impl From<SSZSyncCommittee> for SyncCommittee {
 
 impl From<SSZSyncAggregate> for SyncAggregate {
     fn from(value: SSZSyncAggregate) -> Self {
+        println!("from ssz sync aggregate");
         SyncAggregate {
             sync_committee_bits: value
                 .sync_committee_bits
@@ -232,13 +234,16 @@ pub fn ssz_process_sync_committee_period_update(
     update: Vec<u8>,
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), String> {
+    println!("entry point");
     let prev_update: SSZSyncCommitteePeriodUpdate = deserialize(
         &prev_update,
     )
     .map_err(|e| format!("Failed to decode previous update: {}", e))?;
+    println!("decode 1");
     let update: SSZSyncCommitteePeriodUpdate =
         SSZSyncCommitteePeriodUpdate::deserialize(&update)
             .map_err(|_| "Failed to decode update")?;
+    println!("decode 2");
 
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
