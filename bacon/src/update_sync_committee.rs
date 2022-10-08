@@ -114,15 +114,3 @@ fn hash_tree_root_sync_committee(sync_committee: SyncCommittee) -> Result<[u8; 3
         aggregate_pubkey: agg,
     })
 }
-
-
-
-
-
-
-// fn compute_current_sync_period(slot: u64) -> u64 {
-//     slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD
-// }
-
-
-
