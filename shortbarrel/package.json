@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src --ext .ts"
   },
   "devDependencies": {
     "@types/node": "^18.8.3",

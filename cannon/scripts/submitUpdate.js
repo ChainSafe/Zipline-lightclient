@@ -6,8 +6,8 @@ async function main() {
 
   const output = execSync("node ../shortbarrel/dist/createUpdate.js")
 
-  const finalizedHash = output.slice(0, 32);
-  const update = output.slice(32);
+  const finalizedHash = output.slice(64, 96);
+  const update = output.slice(96);
 
   await c.updatePeriod(update, finalizedHash);
 }

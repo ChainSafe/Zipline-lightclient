@@ -38,10 +38,6 @@ function getEmulatorInput(update: altair.LightClientUpdate): {
   return { update: serialized, updateHash: hash };
 }
 
-function shell(cmd: string): string {
-  return execSync(cmd, { encoding: "utf8", stdio: "pipe" }).trim();
-}
-
 ///
 
 async function main(): Promise<void> {
@@ -68,11 +64,19 @@ async function main(): Promise<void> {
     .join(" ")}`;
   console.error(`calling emulator`, shellCmdStr);
 
-  //const out = shell(shellCmdStr).split(" ");
+  const out = execSync(shellCmdStr);
+
+  if (out.length !== 64) {
+    console.error(
+      `expected emulator output of 64 bytes, got ${out.length} bytes`
+    );
+    process.exit(1);
+  }
 
   // write out finalized block root and ssz-serialized update
   process.stdout.write(
     Buffer.concat([
+      out,
       ssz.phase0.BeaconBlockHeader.hashTreeRoot(data[1].finalizedHeader),
       inputs[1].update,
     ])
