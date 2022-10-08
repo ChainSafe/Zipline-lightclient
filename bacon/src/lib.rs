@@ -53,6 +53,12 @@ pub struct SSZBeaconBlockHeader {
     pub state_root: [u8; 32],
     pub body_root: [u8; 32],
 }
+#[derive(Default, Debug, SimpleSerialize, Clone)]
+pub struct SSZSyncAggregate {
+    pub sync_committee_bits: Bitvector<{ SYNC_COMMITTEE_SIZE }>,
+    pub sync_committee_signature: Vector<u8, { SIGNATURE_SIZE }>,
+}
+
 #[derive(Default, SimpleSerialize)]
 pub struct SSZForkData {
     pub current_version: [u8; 4],
@@ -63,6 +69,22 @@ pub struct SSZSigningData {
     pub object_root: [u8; 32],
     pub domain: [u8; 32],
 }
+
+#[derive(Default, SimpleSerialize)]
+pub struct SSZSyncCommitteePeriodUpdate {
+    pub attested_header: SSZBeaconBlockHeader,
+    pub next_sync_committee: SSZSyncCommittee,
+    // was a bounded vec
+    pub next_sync_committee_branch: Vector<[u8; 32], 5>,
+    pub finalized_header: SSZBeaconBlockHeader,
+    // was a bounded vec
+    pub finality_branch: Vector<[u8; 32], 6>,
+    pub sync_aggregate: SSZSyncAggregate,
+    // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_fork_version"))]
+    pub fork_version: ForkVersion,
+    pub sync_committee_period: u64,
+}
+
 
 #[derive(Clone)]
 pub struct SyncCommittee {
@@ -130,13 +152,13 @@ pub fn process_sync_committee_period_update(
     Ok((update.next_sync_committee, update.finalized_header))
 }
 
-pub fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
+fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
     sync_committee_bits
         .iter()
         .fold(0, |acc: u64, x| acc + *x as u64)
 }
 
-pub fn sync_committee_participation_is_supermajority(
+fn sync_committee_participation_is_supermajority(
     sync_committee_bits: Vec<u8>,
 ) -> Result<(), Box<dyn Error>> {
     let sync_committee_sum = get_sync_committee_sum(sync_committee_bits.clone());
@@ -147,7 +169,7 @@ pub fn sync_committee_participation_is_supermajority(
     }
 }
 
-pub fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, Box<dyn Error>> {
+fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, Box<dyn Error>> {
     let bitv =
         Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex).map_err(|e| e.to_string())?;
 
@@ -181,7 +203,7 @@ fn verify_sync_committee(
     }
 }
 
-pub fn hash_tree_root_sync_committee(
+fn hash_tree_root_sync_committee(
     sync_committee: SyncCommittee,
 ) -> Result<[u8; 32], Box<dyn Error>> {
     let mut pubkeys_vec = Vec::new();
@@ -202,7 +224,7 @@ pub fn hash_tree_root_sync_committee(
     })
 }
 
-pub fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32], Box<dyn Error>> {
     match object.hash_tree_root() {
         Ok(node) => node
             .as_bytes()
@@ -212,7 +234,7 @@ pub fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32]
     }
 }
 
-pub fn is_valid_merkle_branch(
+fn is_valid_merkle_branch(
     leaf: H256,
     branch: Vec<H256>,
     depth: u64,
@@ -253,13 +275,13 @@ pub fn is_valid_merkle_branch(
     return value == root;
 }
 
-pub fn hash_tree_root_beacon_header(
+fn hash_tree_root_beacon_header(
     beacon_header: BeaconHeader,
 ) -> Result<[u8; 32], Box<dyn Error>> {
     hash_tree_root(get_ssz_beacon_header(beacon_header)?)
 }
 
-pub fn get_ssz_beacon_header(
+fn get_ssz_beacon_header(
     beacon_header: BeaconHeader,
 ) -> Result<SSZBeaconBlockHeader, Box<dyn Error>> {
     Ok(SSZBeaconBlockHeader {
@@ -302,11 +324,11 @@ fn verify_header(
         return Err("Header merkle branch is invalid".into());
     }
 }
-pub fn compute_current_sync_period(slot: u64) -> u64 {
-    slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD
-}
+// fn compute_current_sync_period(slot: u64) -> u64 {
+//     slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD
+// }
 
-pub fn verify_signed_header(
+fn verify_signed_header(
     sync_committee_bits: Vec<u8>,
     sync_committee_signature: Vec<u8>,
     sync_committee_pubkeys: Vec<PublicKey>,
@@ -337,7 +359,7 @@ pub fn verify_signed_header(
 
     Ok(())
 }
-pub fn compute_domain(
+fn compute_domain(
     domain_type: Vec<u8>,
     fork_version: Option<ForkVersion>,
     genesis_validators_root: Root,
@@ -371,14 +393,14 @@ fn compute_fork_data_root(
     Ok(hash_root.into())
 }
 
-pub fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], Box<dyn Error>> {
     hash_tree_root(SSZForkData {
         current_version: fork_data.current_version,
         genesis_validators_root: fork_data.genesis_validators_root,
     })
 }
 
-pub fn compute_signing_root(
+fn compute_signing_root(
     beacon_header: BeaconHeader,
     domain: Domain,
 ) -> Result<Root, Box<dyn Error>> {
@@ -395,14 +417,14 @@ pub fn compute_signing_root(
 
     Ok(hash_root.into())
 }
-pub fn hash_tree_root_signing_data(signing_data: SigningData) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_signing_data(signing_data: SigningData) -> Result<[u8; 32], Box<dyn Error>> {
     hash_tree_root(SSZSigningData {
         object_root: signing_data.object_root.into(),
         domain: signing_data.domain.into(),
     })
 }
 
-pub fn bls_fast_aggregate_verify(
+fn bls_fast_aggregate_verify(
     pubkeys: Vec<PublicKey>,
     message: H256,
     signature: Vec<u8>,
