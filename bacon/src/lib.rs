@@ -1,15 +1,18 @@
 //! # Ethereum Beacon Client
-#![cfg_attr(not(feature = "std"), no_std)]
-
-use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
-use snowbridge_beacon_primitives::{BeaconHeader, Domain, PublicKey, Root};
-use snowbridge_ethereum::H256;
-use sp_io::hashing::sha2_256;
-use ssz_rs::{
+// #![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
+extern crate alloc;
+pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
+// pub use snowbridge_ethereum::H256;
+pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
 use ssz_rs_derive::SimpleSerialize;
-use std::error::Error;
+
+use alloc::vec;
+use alloc::vec::Vec;
+use sha2::{Digest, Sha256};
+
 pub type ForkVersion = [u8; 4];
 const SYNC_COMMITTEE_SIZE: usize = 32;
 pub const PUBKEY_SIZE: usize = 48;
@@ -22,6 +25,67 @@ pub const SLOTS_PER_EPOCH: u64 = 8;
 pub const EPOCHS_PER_SYNC_COMMITTEE_PERIOD: u64 = 8;
 pub const DOMAIN_SYNC_COMMITTEE: [u8; 4] = [7, 0, 0, 0];
 pub const GENESIS_FORK_VERSION: ForkVersion = [30, 30, 30, 30];
+
+pub type Domain = H256;
+pub type Root = H256;
+
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub struct H256(pub [u8; 32]);
+
+fn sha2_256(data: &[u8]) -> H256 {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    let mut h = H256::default();
+    h.0.copy_from_slice(&result);
+    h
+}
+
+impl From<[u8; 32]> for H256 {
+    fn from(bytes: [u8; 32]) -> Self {
+        H256(bytes)
+    }
+}
+
+impl From<H256> for [u8; 32] {
+    fn from(h: H256) -> Self {
+        h.0
+    }
+}
+
+impl H256 {
+    pub fn from_slice(bytes: &[u8]) -> Result<Self, &'static str> {
+        if bytes.len() != 32 {
+            return Err("Invalid length for H256".into());
+        }
+        let mut h = H256::default();
+        h.0.copy_from_slice(bytes);
+        Ok(h)
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct PublicKey(pub [u8; 48]);
+
+#[derive(Clone)]
+pub struct BeaconHeader {
+    // The slot for which this block is created. Must be greater than the slot of the block defined
+    // by parentRoot.
+    pub slot: u64,
+    // The index of the validator that proposed the block.
+    pub proposer_index: u64,
+    // The block root of the parent block, forming a block chain.
+    pub parent_root: Root,
+    // The hash root of the post state of running the state transition through this block.
+    pub state_root: Root,
+    // The hash root of the beacon block body
+    pub body_root: Root,
+}
+
 pub struct SyncAggregate {
     // both of these were bounded vecs
     // #[cfg_attr(feature = "std", serde(deserialize_with = "from_hex_to_bytes"))]
@@ -85,7 +149,6 @@ pub struct SSZSyncCommitteePeriodUpdate {
     pub sync_committee_period: u64,
 }
 
-
 #[derive(Clone)]
 pub struct SyncCommittee {
     // should this be a smallvec???
@@ -110,7 +173,7 @@ pub fn process_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,
     update: SyncCommitteePeriodUpdate,
     validators_root: H256,
-) -> Result<(SyncCommittee, BeaconHeader), Box<dyn Error>> {
+) -> Result<(SyncCommittee, BeaconHeader), &'static str> {
     let sync_committee_bits =
         get_sync_committee_bits(update.sync_aggregate.sync_committee_bits.clone())?;
     //     .map_err(|_| DispatchError::Other("Couldn't process sync committee bits"))?;
@@ -160,7 +223,7 @@ fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
 
 fn sync_committee_participation_is_supermajority(
     sync_committee_bits: Vec<u8>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), &'static str> {
     let sync_committee_sum = get_sync_committee_sum(sync_committee_bits.clone());
     if sync_committee_sum * 3 >= sync_committee_bits.clone().len() as u64 * 2 {
         return Ok(());
@@ -169,9 +232,9 @@ fn sync_committee_participation_is_supermajority(
     }
 }
 
-fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, Box<dyn Error>> {
-    let bitv =
-        Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex).map_err(|e| e.to_string())?;
+fn get_sync_committee_bits(bits_hex: Vec<u8>) -> Result<Vec<u8>, &'static str> {
+    let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex)
+        .map_err(|_e| "DeserializeError")?;
 
     let result = bitv
         .iter()
@@ -187,7 +250,7 @@ fn verify_sync_committee(
     header_state_root: H256,
     depth: u64,
     index: u64,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), &'static str> {
     let sync_committee_root = hash_tree_root_sync_committee(sync_committee)?;
 
     if is_valid_merkle_branch(
@@ -203,9 +266,7 @@ fn verify_sync_committee(
     }
 }
 
-fn hash_tree_root_sync_committee(
-    sync_committee: SyncCommittee,
-) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_sync_committee(sync_committee: SyncCommittee) -> Result<[u8; 32], &'static str> {
     let mut pubkeys_vec = Vec::new();
 
     for pubkey in sync_committee.pubkeys.iter() {
@@ -224,13 +285,13 @@ fn hash_tree_root_sync_committee(
     })
 }
 
-fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32], &'static str> {
     match object.hash_tree_root() {
         Ok(node) => node
             .as_bytes()
             .try_into()
             .map_err(|_| "Invalid hash tree root".into()),
-        Err(_e) => Err("MerkleizationError::HashTreeRootError".to_string().into()),
+        Err(_e) => Err("MerkleizationError::HashTreeRootError"),
     }
 }
 
@@ -275,15 +336,13 @@ fn is_valid_merkle_branch(
     return value == root;
 }
 
-fn hash_tree_root_beacon_header(
-    beacon_header: BeaconHeader,
-) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_beacon_header(beacon_header: BeaconHeader) -> Result<[u8; 32], &'static str> {
     hash_tree_root(get_ssz_beacon_header(beacon_header)?)
 }
 
 fn get_ssz_beacon_header(
     beacon_header: BeaconHeader,
-) -> Result<SSZBeaconBlockHeader, Box<dyn Error>> {
+) -> Result<SSZBeaconBlockHeader, &'static str> {
     Ok(SSZBeaconBlockHeader {
         slot: beacon_header.slot,
         proposer_index: beacon_header.proposer_index,
@@ -291,17 +350,17 @@ fn get_ssz_beacon_header(
             .parent_root
             .as_bytes()
             .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength".to_string())?,
+            .map_err(|_| "MerkleizationError::InvalidLength")?,
         state_root: beacon_header
             .state_root
             .as_bytes()
             .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength".to_string())?,
+            .map_err(|_| "MerkleizationError::InvalidLength")?,
         body_root: beacon_header
             .body_root
             .as_bytes()
             .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength".to_string())?,
+            .map_err(|_| "MerkleizationError::InvalidLength")?,
     })
 }
 
@@ -311,7 +370,7 @@ fn verify_header(
     attested_header_state_root: H256,
     depth: u64,
     index: u64,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), &'static str> {
     if is_valid_merkle_branch(
         block_root,
         proof_branch,
@@ -335,7 +394,7 @@ fn verify_signed_header(
     fork_version: ForkVersion,
     header: BeaconHeader,
     validators_root: H256,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), &'static str> {
     let mut participant_pubkeys: Vec<PublicKey> = Vec::new();
     // Gathers all the pubkeys of the sync committee members that participated in siging the header.
     for (bit, pubkey) in sync_committee_bits
@@ -363,7 +422,7 @@ fn compute_domain(
     domain_type: Vec<u8>,
     fork_version: Option<ForkVersion>,
     genesis_validators_root: Root,
-) -> Result<Domain, Box<dyn Error>> {
+) -> Result<Domain, &'static str> {
     let unwrapped_fork_version: ForkVersion;
     if fork_version.is_none() {
         unwrapped_fork_version = GENESIS_FORK_VERSION;
@@ -383,29 +442,26 @@ fn compute_domain(
 fn compute_fork_data_root(
     current_version: ForkVersion,
     genesis_validators_root: Root,
-) -> Result<Root, Box<dyn Error>> {
+) -> Result<Root, &'static str> {
     let hash_root = hash_tree_root_fork_data(ForkData {
         current_version,
         genesis_validators_root: genesis_validators_root.into(),
     })
-    .map_err(|_| "Fork data hash tree root failed".to_string())?;
+    .map_err(|_| "Fork data hash tree root failed")?;
 
     Ok(hash_root.into())
 }
 
-fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], &'static str> {
     hash_tree_root(SSZForkData {
         current_version: fork_data.current_version,
         genesis_validators_root: fork_data.genesis_validators_root,
     })
 }
 
-fn compute_signing_root(
-    beacon_header: BeaconHeader,
-    domain: Domain,
-) -> Result<Root, Box<dyn Error>> {
+fn compute_signing_root(beacon_header: BeaconHeader, domain: Domain) -> Result<Root, &'static str> {
     let beacon_header_root = hash_tree_root_beacon_header(beacon_header)
-        .map_err(|_| "Beacon header hash tree root failed".to_string())?;
+        .map_err(|_| "Beacon header hash tree root failed")?;
 
     let header_hash_tree_root: H256 = beacon_header_root.into();
 
@@ -413,11 +469,11 @@ fn compute_signing_root(
         object_root: header_hash_tree_root,
         domain,
     })
-    .map_err(|_| "Signing root hash tree root failed".to_string())?;
+    .map_err(|_| "Signing root hash tree root failed")?;
 
     Ok(hash_root.into())
 }
-fn hash_tree_root_signing_data(signing_data: SigningData) -> Result<[u8; 32], Box<dyn Error>> {
+fn hash_tree_root_signing_data(signing_data: SigningData) -> Result<[u8; 32], &'static str> {
     hash_tree_root(SSZSigningData {
         object_root: signing_data.object_root.into(),
         domain: signing_data.domain.into(),
@@ -428,10 +484,10 @@ fn bls_fast_aggregate_verify(
     pubkeys: Vec<PublicKey>,
     message: H256,
     signature: Vec<u8>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), &'static str> {
     let sig = Signature::from_bytes(&signature[..]);
     if let Err(_e) = sig {
-        return Err("InvalidSignature".to_string().into());
+        return Err("InvalidSignature");
     }
 
     let agg_sig = AggregateSignature::from_signature(&sig.unwrap());
@@ -442,21 +498,21 @@ fn bls_fast_aggregate_verify(
         .collect();
     if let Err(e) = public_keys_res {
         match e {
-            AmclError::InvalidPoint => return Err("InvalidSignaturePoint".to_string().into()),
-            _ => return Err("InvalidSignature".to_string().into()),
+            AmclError::InvalidPoint => return Err("InvalidSignaturePoint"),
+            _ => return Err("InvalidSignature"),
         };
     }
 
     let agg_pub_key_res = AggregatePublicKey::into_aggregate(&public_keys_res.unwrap());
     if let Err(_e) = agg_pub_key_res {
         // log::error!(target: "ethereum-beacon-client", "invalid public keys: {:?}.", e);
-        return Err("InvalidAggregatePublicKeys".to_string().into());
+        return Err("InvalidAggregatePublicKeys");
     }
 
     if agg_sig.fast_aggregate_verify_pre_aggregated(&message.as_bytes(), &agg_pub_key_res.unwrap())
     {
         Ok(())
     } else {
-        Err("SignatureVerificationFailed".to_string().into())
+        Err("SignatureVerificationFailed")
     }
 }

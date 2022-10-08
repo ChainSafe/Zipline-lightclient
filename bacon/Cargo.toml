@@ -13,21 +13,4 @@ byte-slice-cast = { version = "1.2.1", default-features = false }
 rlp = { version = "0.5", default-features = false }
 hex-literal = { version = "0.3.1", optional = true }
 serde = { version = "1.0.137", optional = true }
-
-snowbridge-ethereum = { path = "/Users/erictu/snowbridge/parachain/primitives/ethereum", default-features = false }
-snowbridge-beacon-primitives = { path = "/Users/erictu/snowbridge/parachain/primitives/beacon", default-features = false }
-
-
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25", default-features = false }
-
-[features]
-minimal = []
-default = ["std"]
-std = [
-    "serde",
-    "snowbridge-ethereum/std",
-    "snowbridge-beacon-primitives/std",
-    "milagro_bls/std",
-    "ssz-rs/std",
-    "byte-slice-cast/std"
-]
+sha2 = "0.10.6"
