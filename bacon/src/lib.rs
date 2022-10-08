@@ -35,6 +35,9 @@ pub const IS_MINIMAL: bool = false;
 pub type Domain = H256;
 pub type Root = H256;
 
+#[cfg(feature = "no-println")]
+macro_rules! println { ($body:expr) => {  } }
+
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct H256(pub [u8; 32]);
 
@@ -247,6 +250,7 @@ pub fn ssz_process_sync_committee_period_update(
 
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
+
     process_sync_committee_period_update(prev_update, update, validators_root).map_err(|e| format!("{}", e))
 }
 
@@ -256,10 +260,13 @@ pub fn process_sync_committee_period_update(
     update: SyncCommitteePeriodUpdate,
     validators_root: H256,
 ) -> Result<(SyncCommittee, BeaconHeader), &'static str> {
+    println!("process sync committee period update");
     let sync_committee_bits =
         get_sync_committee_bits(update.sync_aggregate.sync_committee_bits.clone())?;
     //     .map_err(|_| DispatchError::Other("Couldn't process sync committee bits"))?;
+    println!("got sync committee bits");
     sync_committee_participation_is_supermajority(sync_committee_bits.clone())?;
+    println!("sync committee participation is supermajority");
     verify_sync_committee(
         update.next_sync_committee.clone(),
         update.next_sync_committee_branch,
@@ -267,7 +274,7 @@ pub fn process_sync_committee_period_update(
         NEXT_SYNC_COMMITTEE_DEPTH,
         NEXT_SYNC_COMMITTEE_INDEX,
     )?;
-
+    println!("verified sync committee");
     let block_root: H256 = hash_tree_root_beacon_header(update.finalized_header.clone())?.into();
     verify_header(
         block_root,
