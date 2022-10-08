@@ -46,11 +46,13 @@ pub fn ssz_process_sync_committee_period_update(
     let prev_update = SyncCommitteePeriodUpdate::from(prev_update);
     let update = SyncCommitteePeriodUpdate::from(update);
 
+    // Ok((_prev_update.next_sync_committee, _prev_update.attested_header))
+
     process_sync_committee_period_update(prev_update, update, validators_root)
         .map_err(|_e| "failed sync comitte update period: {}".to_string())
 }
 
-pub fn ssz_process_finalized_header(update: Vec<u8>, sync_committee: Vec<u8>, validators_root: H256) -> Result<BeaconHeader, String> {
+pub fn ssz_process_finalized_header(update: &[u8], sync_committee: &[u8], validators_root: H256) -> Result<BeaconHeader, String> {
     tryprintln!("entry point");
     let update: SSZFinalizedHeaderUpdate =
         deserialize(&update).map_err(|_e| "Failed to decode previous update".to_string())?;
