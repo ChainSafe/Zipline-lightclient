@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 bacon = { path = "../bacon" }
 hex = "0.4.3"
+
+[features]
+no-println = ["bacon/no-println"]
