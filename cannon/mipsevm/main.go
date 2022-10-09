@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
@@ -17,22 +16,15 @@ import (
 func WriteCheckpoint(ram map[uint32](uint32), fn string, step int) {
 	trieroot := RamToTrie(ram)
 	dat := TrieToJson(trieroot, step)
-	fmt.Printf("writing %s len %d with root %s\n", fn, len(dat), trieroot)
+	fmt.Fprintf(os.Stderr, "writing %s len %d with root %s\n", fn, len(dat), trieroot)
 	ioutil.WriteFile(fn, dat, 0644)
 }
 
 func main() {
 	target := -1
 
-	inputHashA, err := hex.DecodeString(strings.TrimPrefix(os.Args[1], "0x"))
-	inputHashB, err := hex.DecodeString(strings.TrimPrefix(os.Args[2], "0x"))
-
 	if len(os.Args) > 3 {
 		target, _ = strconv.Atoi(os.Args[3])
-	}
-
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	regfault := -1
@@ -65,8 +57,8 @@ func main() {
 		}
 		if step%10000000 == 0 {
 			SyncRegs(mu, ram)
-			steps_per_sec := float64(step) * 1e9 / float64(time.Now().Sub(ministart).Nanoseconds())
-			fmt.Printf("%10d pc: %x steps per s %f ram entries %d\n", step, ram[0xc0000080], steps_per_sec, len(ram))
+			//steps_per_sec := float64(step) * 1e9 / float64(time.Now().Sub(ministart).Nanoseconds())
+			//fmt.Printf("%10d pc: %x steps per s %f ram entries %d\n", step, ram[0xc0000080], steps_per_sec, len(ram))
 		}
 		lastStep = step + 1
 	})
@@ -80,14 +72,23 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Println("Golden root hash %s", RamToTrie(ram))
+	// If no args are provided, print the golden root hash and exit
+	if len(os.Args) == 1 {
+		fmt.Print(RamToTrie(ram))
+		return
+	}
 
 	// write the inputs into Unicorn memory
+	inputHashA, err := hex.DecodeString(strings.TrimPrefix(os.Args[1], "0x"))
+	inputHashB, err := hex.DecodeString(strings.TrimPrefix(os.Args[2], "0x"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mu.MemWrite(0x30000000, inputHashA[:])
 	mu.MemWrite(0x30000020, inputHashB[:])
 
-	fmt.Println("Initial execution root hash %s", RamToTrie(ram))
+	//fmt.Println("Initial execution root hash %s", RamToTrie(ram))
 
 	mu.Start(0, 0x5ead0004)
 	SyncRegs(mu, ram)
@@ -97,17 +98,14 @@ func main() {
 			log.Fatal("failed to output state root, exiting")
 		}
 
-		output := []byte{}
-		for i := 0; i < 0x44; i += 4 {
-			t := make([]byte, 4)
-			binary.BigEndian.PutUint32(t, ram[uint32(0x30000800+i)])
-			output = append(output, t...)
-		}
-
-		fmt.Printf("Output: %x \n", output)
+		finalHash := RamToTrie(ram)
+		stepBytes := make([]byte, 28)
+		binary.LittleEndian.PutUint32(stepBytes, uint32(lastStep))
+		output := append(finalHash.Bytes(), stepBytes...)
 
 		WriteCheckpoint(ram, fmt.Sprintf("%s/checkpoint_final.json", root), lastStep)
 
+		os.Stdout.Write(output)
 	}
 
 }
