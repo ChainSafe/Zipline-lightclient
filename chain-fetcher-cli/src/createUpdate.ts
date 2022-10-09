@@ -20,7 +20,7 @@ const API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 const INPUT_DIRECTORY = "../preimage-cache";
 
 //const EMULATOR_CMD = "cd ../cannon/mipsevm && go run .";
-const EMULATOR_CMD = "cd ../shortcut-rs && cargo run -q --";
+const EMULATOR_CMD = "cd ../light-client-verification-cli && cargo run -q --";
 
 ///
 

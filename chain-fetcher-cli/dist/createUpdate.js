@@ -48,7 +48,7 @@ var PAST_PERIOD = Number((_a = process.env.PRIOR_PERIOD) !== null && _a !== void
 var API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 var INPUT_DIRECTORY = "../preimage-cache";
 //const EMULATOR_CMD = "cd ../cannon/mipsevm && go run .";
-var EMULATOR_CMD = "cd ../shortcut-rs && cargo run -q --";
+var EMULATOR_CMD = "cd ../light-client-verification-cli && cargo run -q --";
 ///
 function getPreviousSyncPeriod(api) {
     return __awaiter(this, void 0, void 0, function () {
