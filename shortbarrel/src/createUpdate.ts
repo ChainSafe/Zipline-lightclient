@@ -13,6 +13,8 @@ import { utils } from "ethers";
 
 /// Params
 
+const PAST_PERIOD = Number(process.env.PRIOR_PERIOD ?? 1);
+
 const API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 
 const INPUT_DIRECTORY = "../preimage-cache";
@@ -25,7 +27,8 @@ const EMULATOR_CMD = "cd ../shortcut-rs && cargo run -q --";
 async function getPreviousSyncPeriod(api: Api): Promise<number> {
   const { data } = await api.beacon.getGenesis();
   return Math.max(
-    computeSyncPeriodAtSlot(getCurrentSlot(config, data.genesisTime)) - 1,
+    computeSyncPeriodAtSlot(getCurrentSlot(config, data.genesisTime)) -
+      PAST_PERIOD,
     0
   );
 }

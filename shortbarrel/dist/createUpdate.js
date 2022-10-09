@@ -34,6 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _a;
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
@@ -43,6 +44,7 @@ import { computeSyncPeriodAtSlot, getCurrentSlot, } from "@lodestar/state-transi
 import { ssz } from "@lodestar/types";
 import { utils } from "ethers";
 /// Params
+var PAST_PERIOD = Number((_a = process.env.PRIOR_PERIOD) !== null && _a !== void 0 ? _a : 1);
 var API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 var INPUT_DIRECTORY = "../preimage-cache";
 //const EMULATOR_CMD = "cd ../cannon/mipsevm && go run .";
@@ -56,7 +58,8 @@ function getPreviousSyncPeriod(api) {
                 case 0: return [4 /*yield*/, api.beacon.getGenesis()];
                 case 1:
                     data = (_a.sent()).data;
-                    return [2 /*return*/, Math.max(computeSyncPeriodAtSlot(getCurrentSlot(config, data.genesisTime)) - 1, 0)];
+                    return [2 /*return*/, Math.max(computeSyncPeriodAtSlot(getCurrentSlot(config, data.genesisTime)) -
+                            PAST_PERIOD, 0)];
             }
         });
     });
