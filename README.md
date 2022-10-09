@@ -1,5 +1,7 @@
 # Zipline - A Trustless Eth2 Bridge Protocol
-![](https://i.imgur.com/44VWVOd.png)
+
+<img src="https://i.imgur.com/44VWVOd.png" alt="drawing" width="200"/>
+
 ## Relevant Repository Layout
 ----
 <pre>
