@@ -14,7 +14,7 @@ Alternatively if you want to experiment in the build environment you can with
 	
 ```shell
 make docker_image
-docker run -it --rm --name dev -v $(pwd):/code rust-in-my-cannon/builder bash
+docker run -it --rm --name dev -v $(pwd):/code light-client-verification-mips/builder bash
 ```
 
 and from there you can run 

@@ -4,16 +4,16 @@
 ----
 <pre>
 <a href="./zipline">zipline</a>
-├── <a href="./zipline/bacon">bacon</a>: Ethereum Light Client protocol verification functions in platform-agnostic Rust.  Modified code from by <a href="https://github.com/Snowfork/snowbridge">SnowBridge</a> team to remove all Substrate related functionality and add statelessness.
+├── <a href="./zipline/light-client-rs">light-client-rs</a>: Ethereum Light Client protocol verification functions in platform-agnostic Rust.  Modified code from by <a href="https://github.com/Snowfork/snowbridge">SnowBridge</a> team to remove all Substrate related functionality and add statelessness.
 ├── <a href="./zipline/cannon">cannon</a>: Forked from Optimism's <a href="https://github.com/ethereum-optimism/cannon">Cannon</a> repo.
 |   |── <a href="./zipline/cannon/contracts">contracts</a>
 |   |   |── <a href="./zipline/cannon/contracts/Challenge.sol">Challenge.sol</a>: Forked contract that is used to arbitrate Interactive Verification Game. Modified it to track Ethereum Chain. 
 |   |── <a href="./zipline/cannon/mipsevm">mipsevm</a>: Forked to run Rust MIPS code instead of minigeth.  
 |   |── <a href="./zipline/cannon/contracts">scripts</a>: Added scripts to support interaction with Zipline.
 |   |── <a href="./zipline/cannon/contracts">test</a>: Test functionality of Zipline contracts.
-├── <a href="./zipline/rust-in-my-cannon">rust-in-my-cannon</a>: Adapted from <a href="https://github.com/pepyakin/rusty-cannon">rusty-cannon</a>. A build system for making Cannon compatible Rust programs.
-├── <a href="./zipline/shortbarred">shortbarrel</a>: Scrapes an ETH2 chain to create light client updates for Zipline.
-├── <a href="./zipline/shortcut-rs">shortcut-rs</a>: A Rust CLI that runs bacon natively to verify light client updates.
+├── <a href="./zipline/light-client-verification-mips">light-client-verification-mips</a>: Adapted from <a href="https://github.com/pepyakin/rusty-cannon">rusty-cannon</a>. A build system for making Cannon compatible Rust programs.
+├── <a href="./zipline/shortbarred">chain-fetcher-cli</a>: Scrapes an ETH2 chain to create light client updates for Zipline.
+├── <a href="./zipline/light-client-verification-cli">light-client-verification-cli</a>: A Rust CLI that runs light-client-rs natively to verify light client updates.
 </pre>
 
 ## Background
@@ -136,7 +136,7 @@ The following will call into a Eth2 client and get the state sync proofs for the
 current and previous sync periods. These are returned as SSZ serialized blobs
 
 ```shell
-cd shortbarrel
+cd chain-fetcher-cli
 yarn
 tsc && node dist/index.js
 ```
