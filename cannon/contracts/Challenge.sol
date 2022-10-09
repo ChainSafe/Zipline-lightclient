@@ -96,7 +96,7 @@ contract Challenge {
   /// Timestamp after which the current submission is no longer considered pending
   uint256 public challengeFinishTimestamp;
   // Duration in seconds to challenge a pending update
-  uint256 constant challengeDuration = 100;
+  uint256 public constant challengeDuration = 100;
 
   function finalizePendingSubmission() public {
     require(block.timestamp >= challengeFinishTimestamp, "Cannot finalize a pending update before the challenge timeout is finished");
@@ -127,7 +127,7 @@ contract Challenge {
     require(msg.sender == owner, "Only the sequencer can submit new updates");
 
     // write a trusted sync period the first time
-    if (finalizedSubmission.blockRoot != bytes32(0x0)) {
+    if (finalizedSubmission.blockRoot == bytes32(0x0)) {
       updatePeriodInitial(lightClientUpdate, assertedFinalizedBlockRoot);
       return;
     }
@@ -156,6 +156,10 @@ contract Challenge {
 
   function currentBlockRoot() public view returns (bytes32) {
     return currentSubmission().blockRoot;
+  }
+
+  function pendingBlockNumber() public view returns (uint256) {
+    return pendingSubmission.blockNumber;
   }
 
   /// @param finalSystemState The state hash of the fault proof program's final MIPS state.
