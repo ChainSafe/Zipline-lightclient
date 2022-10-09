@@ -121,7 +121,7 @@ It does not make sense for every block to be relayed that way (too expensive) bu
 
 ## Future Work
 
-TODO
+The next step for this project is implementing a contract that consumes the finalized block headers and uses them as a root to verify proofs of inclusion for pieces of state. This could allow for state synchronization between the origin and target chains.
 
 [^1]: https://rdi.berkeley.edu/zkp/zkBridge/zkBridge.html
 [^2]: https://hackmd.io/@umaroy/SkB26pAFc
