@@ -4,14 +4,12 @@ const child_process = require("child_process")
 
 const basedir = process.env.BASEDIR == undefined ? "/tmp/cannon" : process.env.BASEDIR
 
-async function deploy() {
+async function deploy(goldenRoot) {
   const MIPS = await ethers.getContractFactory("MIPS")
   const m = await MIPS.deploy()
   const mm = await ethers.getContractAt("MIPSMemory", await m.m())
 
-  let startTrie = JSON.parse(fs.readFileSync(basedir+"/golden.json"))
-  let goldenRoot = startTrie["root"]
-  console.log("goldenRoot is", goldenRoot)
+  //console.log("goldenRoot is", goldenRoot)
 
   const Challenge = await ethers.getContractFactory("Challenge")
   const c = await Challenge.deploy(m.address, goldenRoot)
