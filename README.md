@@ -129,8 +129,28 @@ The next step for this project is implementing a contract that consumes the fina
 ## Demo Instructions
 ------
 
+### Running mipsevm
+
+- build light-client-verification-mips
+    ```shell
+    cd light-client-verification-mips
+    make
+    ```
+- build mipsevm
+    ```shell
+    cd cannon
+    make build
+    ```
+- run mipsevm
+    ```shell
+    cd cannon/mipsevm
+    # <hash1> and <hash2> would be known by chain-fetcher-cli
+    go run . <hash1> <hash2>
+    ```
+
 ### Testing the zipline contract
 
+- Make sure mipsevm is built
 - Build chain-fetcher-cli
     ```shell
     cd chain-fetcher-cli
@@ -155,25 +175,6 @@ cd light-client-verification-cli
 # <hash1> and <hash2> would be known by chain-fetcher-cli
 cargo run -q -- <hash1> <hash2>
 ```
-
-### Running mipsevm
-
-- build light-client-verification-mips
-    ```shell
-    cd light-client-verification-mips
-    make
-    ```
-- build mipsevm
-    ```shell
-    cd cannon
-    make build
-    ```
-- run mipsevm
-    ```shell
-    cd cannon/mipsevm
-    # <hash1> and <hash2> would be known by chain-fetcher-cli
-    go run . <hash1> <hash2>
-    ```
 
 ### Running a relayer in testnet
 
