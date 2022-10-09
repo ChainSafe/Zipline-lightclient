@@ -2,7 +2,7 @@ use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-// use std::io::Write;
+use std::io::Write;
 
 const PREIMAGE_CACHE_DIR: &str = "../preimage-cache";
 
@@ -26,13 +26,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         bacon::ssz_process_sync_committee_period_update(&prev_update, &update, validators_root)?;
 
     // println!("{:?}, {:?}", sync_committee, beacon_header);
-    // let mut stdout = std::io::stdout().lock();
+    let stdout = std::io::stdout();
+    let mut stdout_lock = stdout.lock();
 
     // write 64 bytes to std-out for testing purposes
-    // stdout.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
-    // stdout.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
+    stdout_lock.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
+    stdout_lock.write_all(&hex::decode(VALIDATORS_ROOT_HEX_STR).unwrap())?;
 
-    println!("Validation success!!");
+    //println!("Validation success!!");
 
     Ok(())
 }
