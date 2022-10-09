@@ -45,8 +45,7 @@ import { utils } from "ethers";
 /// Params
 var API_ENDPOINT = "https://lodestar-mainnet.chainsafe.io";
 var INPUT_DIRECTORY = "../preimage-cache";
-//const EMULATOR_CMD = "cd ../cannon/mipsevm && go run .";
-var EMULATOR_CMD = "cd ../shortcut-rs && cargo run -q --";
+var EMULATOR_CMD = "cd ../cannon/mipsevm && go run main.go";
 ///
 function getPreviousSyncPeriod(api) {
     return __awaiter(this, void 0, void 0, function () {
@@ -81,6 +80,8 @@ function main() {
                     return [4 /*yield*/, api.lightclient.getUpdates(previousPeriod, 2)];
                 case 2:
                     data = (_a.sent()).data;
+                    // invalidate signature
+                    data[1].syncAggregate.syncCommitteeSignature = Buffer.alloc(96);
                     console.error("writing emulator inputs");
                     inputs = data.map(getEmulatorInput);
                     return [4 /*yield*/, Promise.all(inputs.map(function (input) {
