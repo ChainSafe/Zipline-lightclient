@@ -85,6 +85,8 @@ The bridge must start from a trusted initial block root and committee.
 
 An untrusted relayer can submit new `SyncUpdate` messages as they become available along with a bond. Once the bridge contract receives a new update it stores it as pending.
 
+![](https://i.imgur.com/XO4U2lZ.png)
+
 #### Happy Case
 
 In the ideal case the relayer submitted a valid `SyncUpdate` and no further action is required. After the duration of the challenge period the block referenced by the SyncUpdate can be assumed to be finalized, both on the source chain and on the destination. The relayer can reclaim their bond and may be rewarded depending on the implementation.
