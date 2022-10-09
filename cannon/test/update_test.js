@@ -11,7 +11,7 @@ const hexlify = ethers.utils.hexlify
 const keccak256 = ethers.utils.keccak256
 
 const createUpdate = (priorPeriod=1) => {
-  const output = execSync(`PRIOR_PERIOD=${priorPeriod} node ../shortbarrel/dist/createUpdate.js`, {stdio: "pipe"});
+  const output = execSync(`PRIOR_PERIOD=${priorPeriod} node ../chain-fetcher-cli/dist/createUpdate.js`, {stdio: "pipe"});
   const finalizedRoot = output.slice(64, 96);
   const update = output.slice(96);
   return {finalizedRoot, update};

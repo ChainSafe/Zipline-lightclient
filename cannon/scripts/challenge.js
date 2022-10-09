@@ -8,7 +8,7 @@ async function main() {
 
   console.log(c.address, m.address, mm.address)
 
-  const output = execSync("node ../shortbarrel/dist/createUpdate.js")
+  const output = execSync("node ../chain-fetcher-cli/dist/createUpdate.js")
 
   const finalSystemState = output.slice(0, 32);
   const step = ethers.BigNumber.from(output.slice(32, 64));

@@ -12,7 +12,7 @@
 |   |── <a href="./zipline/cannon/contracts">scripts</a>: Added scripts to support interaction with Zipline.
 |   |── <a href="./zipline/cannon/contracts">test</a>: Test functionality of Zipline contracts.
 ├── <a href="./zipline/light-client-verification-mips">light-client-verification-mips</a>: Adapted from <a href="https://github.com/pepyakin/rusty-cannon">rusty-cannon</a>. A build system for making Cannon compatible Rust programs.
-├── <a href="./zipline/shortbarred">chain-fetcher-cli</a>: Scrapes an ETH2 chain to create light client updates for Zipline.
+├── <a href="./zipline/chain-fetcher-cli">chain-fetcher-cli</a>: Scrapes an ETH2 chain to create light client updates for Zipline.
 ├── <a href="./zipline/light-client-verification-cli">light-client-verification-cli</a>: A Rust CLI that runs light-client-rs natively to verify light client updates.
 </pre>
 
