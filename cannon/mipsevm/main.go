@@ -1,14 +1,15 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"time"
 	"strconv"
+	"strings"
+	"time"
 
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
@@ -23,8 +24,8 @@ func WriteCheckpoint(ram map[uint32](uint32), fn string, step int) {
 func main() {
 	target := -1
 
-	inputHashA, err := hex.DecodeString(os.Args[1])
-	inputHashB, err := hex.DecodeString(os.Args[2])
+	inputHashA, err := hex.DecodeString(strings.TrimPrefix(os.Args[1], "0x"))
+	inputHashB, err := hex.DecodeString(strings.TrimPrefix(os.Args[2], "0x"))
 
 	if len(os.Args) > 3 {
 		target, _ = strconv.Atoi(os.Args[3])
@@ -90,7 +91,7 @@ func main() {
 
 	mu.Start(0, 0x5ead0004)
 	SyncRegs(mu, ram)
-	
+
 	if target == -1 {
 		if ram[0x30000800] != 0x1337f00d {
 			log.Fatal("failed to output state root, exiting")
@@ -103,7 +104,7 @@ func main() {
 			output = append(output, t...)
 		}
 
-		fmt.Printf("Output: %x \n", output);
+		fmt.Printf("Output: %x \n", output)
 
 		WriteCheckpoint(ram, fmt.Sprintf("%s/checkpoint_final.json", root), lastStep)
 
