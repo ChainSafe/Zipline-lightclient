@@ -1,22 +1,54 @@
 const { expect } = require("chai")
 const fs = require("fs")
+const {execSync} = require("child_process")
 const { deploy, getTrieNodesForCall } = require("../scripts/lib")
+const hre = require("hardhat")
+const { network, ethers } = require("hardhat")
+const { mine, time } = require("@nomicfoundation/hardhat-network-helpers");
+
+const arrayify = ethers.utils.arrayify
+const hexlify = ethers.utils.hexlify
 
 // This test needs preimages to run correctly.
 // It is skipped when running `make test_contracts`, but can be run with `make test_challenge`.
-describe("Challenge contract", function () {
-  if (!fs.existsSync("/tmp/cannon/golden.json")) {
-    console.log("golden file doesn't exist, skipping test")
-    return
-  }
+describe("Challenge contract", async function () {
+  const {ssz} = await import("@lodestar/types");
+  const goldenRoot = execSync("cd mipsevm && go run .", {encoding: "utf8"});
 
   beforeEach(async function () {
-    [c, m, mm] = await deploy()
+    [c, m, mm] = await deploy(goldenRoot)
   })
   it("challenge contract deploys", async function() {
     console.log("Challenge deployed at", c.address)
   })
-  it("initiate challenge", async function() {
+  it.only("submit a bootstrap update", async function() {
+    const output = execSync("node ../shortbarrel/dist/createUpdate.js", {stdio: "pipe"})
+
+    const finalizedRoot = output.slice(64, 96);
+    const update = output.slice(96);
+
+    // submit a single update
+    await c.updatePeriod(update, finalizedRoot, {gasLimit: 30000000});
+
+    const blockNumber = await time.latestBlock()
+
+    // assert that the bootstrap update sets the finalized submission slot with the right values
+    const finalizedSubmission = await c.finalizedSubmission()
+
+    expect(finalizedSubmission.blockNumber.toNumber()).to.equal(blockNumber)
+    expect(finalizedSubmission.blockRoot).to.equal(hexlify(finalizedRoot))
+  })
+  it("submit a pending update", async function() {
+    // assert that the bootstrap update sets the pending submission slot with the right values
+  })
+  it("pending update becomes finalized after the challenge period", async function() {
+    hre.network.provider.request({
+      method: "evm_increaseTime",
+      params: []
+    })
+
+  })
+  it("pending update can be challenged during challenge period", async function() {
     // TODO: is there a better way to get the "HardhatNetworkProvider"?
     const hardhat = network.provider._wrapped._wrapped._wrapped._wrapped._wrapped
     const blockchain = hardhat._node._blockchain
