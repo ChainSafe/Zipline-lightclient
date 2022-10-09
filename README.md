@@ -148,19 +148,19 @@ The next step for this project is implementing a contract that consumes the fina
     npx hardhat test
     ```
 
-### Running light-client-verifier-cli
+### Running light-client-verification-cli
 
 ```shell
-cd light-client-verifier-cli
+cd light-client-verification-cli
 # <hash1> and <hash2> would be known by chain-fetcher-cli
 cargo run -q -- <hash1> <hash2>
 ```
 
 ### Running mipsevm
 
-- build light-client-verifier-mips
+- build light-client-verification-mips
     ```shell
-    cd light-client-verifier-mips
+    cd light-client-verification-mips
     make
     ```
 - build mipsevm
