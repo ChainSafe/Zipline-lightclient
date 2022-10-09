@@ -128,24 +128,68 @@ The next step for this project is implementing a contract that consumes the fina
 [^3]: https://github.com/Snowfork/snowbridge
 ## Demo Instructions
 ------
-## Relayer
 
-### Retrieve sync period updates from Lodestar
+### Testing the zipline contract
 
-The following will call into a Eth2 client and get the state sync proofs for the 
-current and previous sync periods. These are returned as SSZ serialized blobs
+- Build chain-fetcher-cli
+    ```shell
+    cd chain-fetcher-cli
+    yarn && yarn build
+    ```
+- Compile zipline contracts
+    ```shell
+    cd cannon
+    npm i
+    npx hardhat compile
+    ```
+- Run hardhat test
+    ```shell
+    cd cannon
+    npx hardhat test
+    ```
+
+### Running light-client-verifier-cli
 
 ```shell
-cd chain-fetcher-cli
-yarn
-tsc && node dist/index.js
+cd light-client-verifier-cli
+# <hash1> and <hash2> would be known by chain-fetcher-cli
+cargo run -q -- <hash1> <hash2>
 ```
 
-This will write the serialized sync update messages in binary form to the `preimage-cache` directory
+### Running mipsevm
 
-### Run off-chain validation to ensure the Eth2 node was being honest
+- build light-client-verifier-mips
+    ```shell
+    cd light-client-verifier-mips
+    make
+    ```
+- build mipsevm
+    ```shell
+    cd cannon
+    make build
+    ```
+- run mipsevm
+    ```shell
+    cd cannon/mipsevm
+    # <hash1> and <hash2> would be known by chain-fetcher-cli
+    go run . <hash1> <hash2>
+    ```
 
+### Running a relayer in testnet
+
+- make sure Zipline contracts are compiled
+- make sure mipsevm has been built
+- 
 ```shell
-cd shortcut-ts
-cargo run 
+# in one window
+cd cannon
+./demo/forked_node.sh
+
+# in another window
+cd cannon
+# deploy contract and seed with an initial light client update
+npx hardhat run scripts/deploy.js
+PRIOR_PERIOD=2 npx hardhat run scripts/submitUpdate.js
+# run this once per sync committee period
+npx hardhat run scripts/submitUpdate.js
 ```
