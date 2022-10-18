@@ -2,6 +2,7 @@ use crate::constants::*;
 use crate::types::*;
 
 use alloc::string::String;
+use crate::alloc::string::ToString;
 use alloc::vec::Vec;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use sha2::{Digest, Sha256};
@@ -57,17 +58,13 @@ pub(super) fn verify_header(
     depth: u64,
     index: u64,
 ) -> Result<(), String> {
-    if is_valid_merkle_branch(
+    is_valid_merkle_branch(
         block_root,
         proof_branch,
         depth,
         index,
         attested_header_state_root,
-    ) {
-        return Ok(());
-    } else {
-        return Err("Header merkle branch is invalid".into());
-    }
+    )
 }
 
 pub(super) fn verify_signed_header(
@@ -108,23 +105,17 @@ pub(super) fn is_valid_merkle_branch(
     depth: u64,
     index: u64,
     root: Root,
-) -> bool {
+) -> Result<(), String> {
     if branch.len() != depth as usize {
-        // log::error!(target: "ethereum-beacon-client", "Merkle proof branch length doesn't match depth.");
-
-        return false;
+        return Err("Merkle proof branch length doesn't match depth".to_string());
     }
     let mut value = leaf;
     if leaf.as_bytes().len() < 32 as usize {
-        // log::error!(target: "ethereum-beacon-client", "Merkle proof leaf not 32 bytes.");
-
-        return false;
+        return Err("Merkle proof leaf not 32 bytes.".to_string());
     }
     for i in 0..depth {
         if branch[i as usize].as_bytes().len() < 32 as usize {
-            // log::error!(target: "ethereum-beacon-client", "Merkle proof branch not 32 bytes.");
-
-            return false;
+            return Err("Merkle proof branch not 32 bytes.".to_string());
         }
         if (index / (2u32.pow(i as u32) as u64) % 2) == 0 {
             // left node
@@ -139,8 +130,11 @@ pub(super) fn is_valid_merkle_branch(
             value = sha2_256(&data).into();
         }
     }
-
-    return value == root;
+    if value == root {
+        return Ok(())
+    } else {
+        return Err("Value not equal to root".to_string())
+    }
 }
 
 pub(super) fn compute_domain(

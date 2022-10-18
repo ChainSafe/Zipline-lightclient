@@ -1,0 +1,31 @@
+use bacon;
+
+const VALIDATORS_ROOT: [u8; 32] = [
+    75, 54, 61, 185, 78, 40, 97, 32, 215, 110, 185, 5, 52, 15, 221, 78, 84, 191, 233, 240, 107,
+    243, 63, 246, 207, 90, 210, 127, 81, 27, 254, 149,
+];
+
+const A: &[u8] = include_bytes!("sync-updates/0xe4c2cee3a9455c2b7c0449152a8c7e1a7b811353e4ea2c1dbe1cbe0c790b45f7");
+const B: &[u8] = include_bytes!("sync-updates/0x78ae69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85");
+const B_FAIL: &[u8] = include_bytes!("sync-updates/0xdead69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85");
+
+#[test]
+fn can_check_valid_transition() -> Result<(), String> {
+	bacon::check_sync_committee_period_update(
+        bacon::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
+        bacon::SyncCommitteePeriodUpdate::try_from(B).unwrap(),
+        bacon::H256(VALIDATORS_ROOT),
+    )
+}
+
+#[test]
+fn can_check_invalid_transition() {
+	assert_eq!(
+		bacon::check_sync_committee_period_update(
+	        bacon::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
+	        bacon::SyncCommitteePeriodUpdate::try_from(B_FAIL).unwrap(),
+	        bacon::H256(VALIDATORS_ROOT),
+	    ),
+	    Err("Value not equal to root".to_string())
+	)
+}

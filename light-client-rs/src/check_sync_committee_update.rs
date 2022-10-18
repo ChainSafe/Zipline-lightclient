@@ -65,17 +65,13 @@ fn verify_sync_committee(
 ) -> Result<(), String> {
     let sync_committee_root = hash_tree_root_sync_committee(sync_committee)?;
 
-    if is_valid_merkle_branch(
+    is_valid_merkle_branch(
         sync_committee_root.into(),
         sync_committee_branch,
         depth,
         index,
         header_state_root,
-    ) {
-        return Ok(());
-    } else {
-        return Err("Sync committee merkle branch is invalid".into());
-    }
+    )
 }
 
 fn hash_tree_root_sync_committee(sync_committee: SyncCommittee) -> Result<[u8; 32], String> {
