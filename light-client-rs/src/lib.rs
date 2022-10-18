@@ -1,5 +1,6 @@
-//! # Ethereum Beacon Client
 #![no_std]
+#![doc = include_str!("../README.md")]
+
 extern crate alloc;
 
 mod check_sync_committee_update;

@@ -1,4 +1,4 @@
-use bacon;
+use eth_lightclient;
 
 const VALIDATORS_ROOT: [u8; 32] = [
     75, 54, 61, 185, 78, 40, 97, 32, 215, 110, 185, 5, 52, 15, 221, 78, 84, 191, 233, 240, 107,
@@ -11,20 +11,20 @@ const B_FAIL: &[u8] = include_bytes!("sync-updates/0xdead69239826edd5ac0abfe3a69
 
 #[test]
 fn can_check_valid_transition() -> Result<(), String> {
-	bacon::check_sync_committee_period_update(
-        bacon::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
-        bacon::SyncCommitteePeriodUpdate::try_from(B).unwrap(),
-        bacon::H256(VALIDATORS_ROOT),
+	eth_lightclient::check_sync_committee_period_update(
+        eth_lightclient::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
+        eth_lightclient::SyncCommitteePeriodUpdate::try_from(B).unwrap(),
+        eth_lightclient::H256(VALIDATORS_ROOT),
     )
 }
 
 #[test]
 fn can_check_invalid_transition() {
 	assert_eq!(
-		bacon::check_sync_committee_period_update(
-	        bacon::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
-	        bacon::SyncCommitteePeriodUpdate::try_from(B_FAIL).unwrap(),
-	        bacon::H256(VALIDATORS_ROOT),
+		eth_lightclient::check_sync_committee_period_update(
+	        eth_lightclient::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
+	        eth_lightclient::SyncCommitteePeriodUpdate::try_from(B_FAIL).unwrap(),
+	        eth_lightclient::H256(VALIDATORS_ROOT),
 	    ),
 	    Err("Value not equal to root".to_string())
 	)
