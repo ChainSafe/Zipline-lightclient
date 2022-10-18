@@ -1,17 +1,13 @@
-pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
-use sha2::Digest;
-use sha2::Sha256;
+use crate::constants::*;
 use crate::types::*;
-use crate::types::{get_ssz_beacon_header};
 
-use alloc::vec::Vec;
 use alloc::string::String;
-
+use alloc::vec::Vec;
+pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
+use sha2::{Digest, Sha256};
 pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
-
-use crate::constants::*;
 
 fn sha2_256(data: &[u8]) -> H256 {
     let mut hasher = Sha256::new();
@@ -22,7 +18,9 @@ fn sha2_256(data: &[u8]) -> H256 {
     h
 }
 
-pub(super) fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>) -> Result<Vec<u8>, String> {
+pub(super) fn get_sync_committee_bits(
+    bitv: Bitvector<{ SYNC_COMMITTEE_SIZE }>,
+) -> Result<Vec<u8>, String> {
     let result = bitv
         .iter()
         .map(|bit| if bit == true { 1 } else { 0 })
@@ -30,16 +28,17 @@ pub(super) fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>
     Ok(result)
 }
 
-pub(super)fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
+pub(super) fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
     sync_committee_bits
         .iter()
         .fold(0, |acc: u64, x| acc + *x as u64)
 }
 
-pub(super) fn hash_tree_root_beacon_header(beacon_header: BeaconBlockHeader) -> Result<[u8; 32], String> {
-    hash_tree_root(get_ssz_beacon_header(beacon_header)?)
+pub(super) fn hash_tree_root_beacon_header(
+    beacon_header: BeaconBlockHeader,
+) -> Result<[u8; 32], String> {
+    hash_tree_root(SSZBeaconBlockHeader::try_from(beacon_header)?)
 }
-
 
 pub(super) fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[u8; 32], String> {
     match object.hash_tree_root() {
@@ -71,7 +70,7 @@ pub(super) fn verify_header(
     }
 }
 
-pub(super)fn verify_signed_header(
+pub(super) fn verify_signed_header(
     sync_committee_bits: Vec<u8>,
     sync_committee_signature: Vec<u8>,
     sync_committee_pubkeys: Vec<PublicKey>,
@@ -103,7 +102,7 @@ pub(super)fn verify_signed_header(
     Ok(())
 }
 
-pub(super)fn is_valid_merkle_branch(
+pub(super) fn is_valid_merkle_branch(
     leaf: H256,
     branch: Vec<H256>,
     depth: u64,
@@ -165,7 +164,7 @@ pub(super) fn compute_domain(
     Ok(domain.into())
 }
 
-pub(super)fn compute_fork_data_root(
+pub(super) fn compute_fork_data_root(
     current_version: ForkVersion,
     genesis_validators_root: Root,
 ) -> Result<Root, String> {
@@ -178,14 +177,14 @@ pub(super)fn compute_fork_data_root(
     Ok(hash_root.into())
 }
 
-pub(super)fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], String> {
+pub(super) fn hash_tree_root_fork_data(fork_data: ForkData) -> Result<[u8; 32], String> {
     hash_tree_root(SSZForkData {
         current_version: fork_data.current_version,
         genesis_validators_root: fork_data.genesis_validators_root,
     })
 }
 
-pub(super)fn bls_fast_aggregate_verify(
+pub(super) fn bls_fast_aggregate_verify(
     pubkeys: Vec<PublicKey>,
     message: H256,
     signature: Vec<u8>,

@@ -1,11 +1,11 @@
+use crate::constants::*;
+
+use alloc::vec;
+use alloc::vec::Vec;
 pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
-use crate::constants::*;
-
 use ssz_rs_derive::SimpleSerialize;
-use alloc::vec;
-use alloc::vec::Vec;
 
 pub struct SyncAggregate {
     pub sync_committee_bits: Bitvector<SYNC_COMMITTEE_SIZE>,

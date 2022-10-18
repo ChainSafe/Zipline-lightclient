@@ -1,10 +1,10 @@
-use ssz_rs::prelude::Vector;
-use super::types::*;
-use super::utils::*;
 use crate::constants::*;
-use crate::types::SSZSyncCommittee;
+use crate::types::*;
+use crate::utils::*;
+
 use alloc::string::String;
 use alloc::vec::Vec;
+use ssz_rs::prelude::Vector;
 
 pub fn check_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,

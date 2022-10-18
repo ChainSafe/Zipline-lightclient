@@ -1,12 +1,12 @@
+use crate::constants::*;
 use crate::types::PublicKey;
+
+use alloc::vec;
+use alloc::vec::Vec;
 pub use ssz_rs::{
     prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
 };
-use crate::constants::*;
-
 use ssz_rs_derive::SimpleSerialize;
-use alloc::vec;
-use alloc::vec::Vec;
 
 #[derive(Clone, Debug)]
 pub struct SyncCommittee {

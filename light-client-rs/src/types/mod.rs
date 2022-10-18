@@ -1,17 +1,17 @@
-
-use ssz_rs::Sized;
 use ssz_rs::Deserialize;
-mod sync_committee_period_update;
+use ssz_rs::Sized;
+
 mod beacon_block_header;
 mod h256;
 mod sync_aggregate;
 mod sync_committee;
+mod sync_committee_period_update;
 
-pub use sync_committee_period_update::{SyncCommitteePeriodUpdate, SSZSyncCommitteePeriodUpdate};
-pub use beacon_block_header::{BeaconBlockHeader, SSZBeaconBlockHeader, get_ssz_beacon_header};
-pub use sync_aggregate::{SyncAggregate, SSZSyncAggregate};
-pub use sync_committee::{SyncCommittee, SSZSyncCommittee};
+pub use beacon_block_header::{BeaconBlockHeader, SSZBeaconBlockHeader};
 pub use h256::H256;
+pub use sync_aggregate::{SSZSyncAggregate, SyncAggregate};
+pub use sync_committee::{SSZSyncCommittee, SyncCommittee};
+pub use sync_committee_period_update::{SSZSyncCommitteePeriodUpdate, SyncCommitteePeriodUpdate};
 
 pub type ForkVersion = [u8; 4];
 
@@ -34,9 +34,9 @@ pub struct SigningData {
     pub domain: Domain,
 }
 
-use ssz_rs_derive::SimpleSerialize;
 use alloc::vec;
 use alloc::vec::Vec;
+use ssz_rs_derive::SimpleSerialize;
 
 #[derive(Default, SimpleSerialize, Debug)]
 pub struct SSZForkData {

@@ -1,11 +1,10 @@
-use ssz_rs::Sized;
-use ssz_rs::Deserialize;
-use alloc::string::String;
 use crate::types::Root;
 
-use ssz_rs_derive::SimpleSerialize;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use ssz_rs::{Deserialize, Sized};
+use ssz_rs_derive::SimpleSerialize;
 
 #[derive(Clone, Debug)]
 pub struct BeaconBlockHeader {
@@ -43,24 +42,27 @@ impl From<SSZBeaconBlockHeader> for BeaconBlockHeader {
     }
 }
 
-pub fn get_ssz_beacon_header(beacon_header: BeaconBlockHeader) -> Result<SSZBeaconBlockHeader, String> {
-    Ok(SSZBeaconBlockHeader {
-        slot: beacon_header.slot,
-        proposer_index: beacon_header.proposer_index,
-        parent_root: beacon_header
-            .parent_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-        state_root: beacon_header
-            .state_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-        body_root: beacon_header
-            .body_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-    })
+impl TryFrom<BeaconBlockHeader> for SSZBeaconBlockHeader {
+    type Error = String;
+    fn try_from(beacon_header: BeaconBlockHeader) -> Result<Self, Self::Error> {
+        Ok(SSZBeaconBlockHeader {
+            slot: beacon_header.slot,
+            proposer_index: beacon_header.proposer_index,
+            parent_root: beacon_header
+                .parent_root
+                .as_bytes()
+                .try_into()
+                .map_err(|_| "MerkleizationError::InvalidLength")?,
+            state_root: beacon_header
+                .state_root
+                .as_bytes()
+                .try_into()
+                .map_err(|_| "MerkleizationError::InvalidLength")?,
+            body_root: beacon_header
+                .body_root
+                .as_bytes()
+                .try_into()
+                .map_err(|_| "MerkleizationError::InvalidLength")?,
+        })
+    }
 }

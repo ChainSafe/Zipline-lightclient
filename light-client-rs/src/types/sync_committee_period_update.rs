@@ -1,16 +1,14 @@
+use crate::types::*;
+
 use crate::alloc::string::ToString;
-use ssz_rs::deserialize;
 use alloc::string::String;
-pub use ssz_rs::{
-    prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
-};
-
-
-use ssz_rs_derive::SimpleSerialize;
 use alloc::vec;
 use alloc::vec::Vec;
-
-use crate::types::{H256, BeaconBlockHeader, ForkVersion, SyncAggregate, SyncCommittee, SSZSyncAggregate, SSZSyncCommittee, SSZBeaconBlockHeader};
+pub use ssz_rs::{
+    deserialize, prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait,
+    Sized,
+};
+use ssz_rs_derive::SimpleSerialize;
 
 pub struct SyncCommitteePeriodUpdate {
     pub attested_header: BeaconBlockHeader,
