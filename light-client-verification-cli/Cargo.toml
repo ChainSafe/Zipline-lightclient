@@ -3,11 +3,6 @@ name = "shortcut-rs"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bacon = { path = "../light-client-rs" }
+eth-lightclient = { path = "../light-client-rs" }
 hex = "0.4.3"
-
-[features]
-no-println = ["bacon/no-println"]

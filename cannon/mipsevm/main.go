@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
@@ -57,15 +58,15 @@ func main() {
 		}
 		if step%10000000 == 0 {
 			SyncRegs(mu, ram)
-			//steps_per_sec := float64(step) * 1e9 / float64(time.Now().Sub(ministart).Nanoseconds())
-			//fmt.Printf("%10d pc: %x steps per s %f ram entries %d\n", step, ram[0xc0000080], steps_per_sec, len(ram))
+			steps_per_sec := float64(step) * 1e9 / float64(time.Now().Sub(ministart).Nanoseconds())
+			fmt.Printf("%10d pc: %x steps per s %f ram entries %d\n", step, ram[0xc0000080], steps_per_sec, len(ram))
 		}
 		lastStep = step + 1
 	})
 
 	ZeroRegisters(ram)
 	// not ready for golden yet
-	LoadMappedFileUnicorn(mu, "../../rust-in-my-cannon/build/rust-in-my-cannon.bin", ram, 0)
+	LoadMappedFileUnicorn(mu, "../../light-client-verification-mips/build/rust-in-my-cannon.bin", ram, 0)
 	if root == "" {
 		WriteCheckpoint(ram, fmt.Sprintf("%s/golden.json", basedir), -1)
 		fmt.Println("exiting early without a block number")

@@ -33,10 +33,10 @@ pub extern "C" fn _start() {
     let prev_update_bytes = iommu::preimage(input_hash_a).unwrap();
     let current_update_bytes = iommu::preimage(input_hash_b).unwrap();
 
-    match bacon::ssz_process_sync_committee_period_update(
-        prev_update_bytes,
-        current_update_bytes,
-        bacon::H256(VALIDATORS_ROOT),
+    match eth_lightclient::check_sync_committee_period_update(
+        eth_lightclient::SyncCommitteePeriodUpdate::try_from(prev_update_bytes).unwrap(),
+        eth_lightclient::SyncCommitteePeriodUpdate::try_from(current_update_bytes).unwrap(),
+        eth_lightclient::H256(VALIDATORS_ROOT),
     ) {
         Ok(_) => {
             iommu::output([0xff_u8; 32]);
