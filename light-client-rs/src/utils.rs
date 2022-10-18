@@ -1,8 +1,8 @@
 use crate::constants::*;
 use crate::types::*;
 
-use alloc::string::String;
 use crate::alloc::string::ToString;
+use alloc::string::String;
 use alloc::vec::Vec;
 pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
 use sha2::{Digest, Sha256};
@@ -131,9 +131,9 @@ pub(super) fn is_valid_merkle_branch(
         }
     }
     if value == root {
-        return Ok(())
+        return Ok(());
     } else {
-        return Err("Value not equal to root".to_string())
+        return Err("Value not equal to root".to_string());
     }
 }
 
