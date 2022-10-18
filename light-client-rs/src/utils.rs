@@ -1,19 +1,32 @@
-use super::types::*;
+pub use milagro_bls::{AggregatePublicKey, AggregateSignature, AmclError, Signature};
+use sha2::Digest;
+use sha2::Sha256;
+use crate::types::*;
+use crate::types::{get_ssz_beacon_header};
 
 use alloc::vec::Vec;
 use alloc::string::String;
 
-pub(super) fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>) -> Result<Vec<u8>, String> {
-    // tryprintln!("About to deserialize");
-    // let bitv = Bitvector::<{ SYNC_COMMITTEE_SIZE }>::deserialize(&bits_hex).unwrap();
-        // .map_err(|_e| "DeserializeError".to_string())?;
-    // tryprintln!("did deserialize");
+pub use ssz_rs::{
+    prelude::Vector, Bitvector, Deserialize, SimpleSerialize as SimpleSerializeTrait, Sized,
+};
 
+use crate::constants::*;
+
+fn sha2_256(data: &[u8]) -> H256 {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    let mut h = H256::default();
+    h.0.copy_from_slice(&result);
+    h
+}
+
+pub(super) fn get_sync_committee_bits(bitv: Bitvector::<{ SYNC_COMMITTEE_SIZE }>) -> Result<Vec<u8>, String> {
     let result = bitv
         .iter()
         .map(|bit| if bit == true { 1 } else { 0 })
         .collect::<Vec<_>>();
-
     Ok(result)
 }
 
@@ -23,7 +36,7 @@ pub(super)fn get_sync_committee_sum(sync_committee_bits: Vec<u8>) -> u64 {
         .fold(0, |acc: u64, x| acc + *x as u64)
 }
 
-pub(super) fn hash_tree_root_beacon_header(beacon_header: BeaconHeader) -> Result<[u8; 32], String> {
+pub(super) fn hash_tree_root_beacon_header(beacon_header: BeaconBlockHeader) -> Result<[u8; 32], String> {
     hash_tree_root(get_ssz_beacon_header(beacon_header)?)
 }
 
@@ -36,28 +49,6 @@ pub(super) fn hash_tree_root<T: SimpleSerializeTrait>(mut object: T) -> Result<[
             .map_err(|_| "Invalid hash tree root".into()),
         Err(_e) => Err("MerkleizationError::HashTreeRootError".into()),
     }
-}
-
-pub(super) fn get_ssz_beacon_header(beacon_header: BeaconHeader) -> Result<SSZBeaconBlockHeader, String> {
-    Ok(SSZBeaconBlockHeader {
-        slot: beacon_header.slot,
-        proposer_index: beacon_header.proposer_index,
-        parent_root: beacon_header
-            .parent_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-        state_root: beacon_header
-            .state_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-        body_root: beacon_header
-            .body_root
-            .as_bytes()
-            .try_into()
-            .map_err(|_| "MerkleizationError::InvalidLength")?,
-    })
 }
 
 pub(super) fn verify_header(
@@ -85,7 +76,7 @@ pub(super)fn verify_signed_header(
     sync_committee_signature: Vec<u8>,
     sync_committee_pubkeys: Vec<PublicKey>,
     fork_version: ForkVersion,
-    header: BeaconHeader,
+    header: BeaconBlockHeader,
     validators_root: H256,
 ) -> Result<(), String> {
     let mut participant_pubkeys: Vec<PublicKey> = Vec::new();
@@ -230,7 +221,8 @@ pub(super)fn bls_fast_aggregate_verify(
         Err("SignatureVerificationFailed".into())
     }
 }
-fn compute_signing_root(beacon_header: BeaconHeader, domain: Domain) -> Result<Root, String> {
+
+fn compute_signing_root(beacon_header: BeaconBlockHeader, domain: Domain) -> Result<Root, String> {
     let beacon_header_root = hash_tree_root_beacon_header(beacon_header)
         .map_err(|_| "Beacon header hash tree root failed")?;
 
@@ -245,13 +237,9 @@ fn compute_signing_root(beacon_header: BeaconHeader, domain: Domain) -> Result<R
     Ok(hash_root.into())
 }
 
-
-
-
 fn hash_tree_root_signing_data(signing_data: SigningData) -> Result<[u8; 32], String> {
     hash_tree_root(SSZSigningData {
         object_root: signing_data.object_root.into(),
         domain: signing_data.domain.into(),
     })
 }
-

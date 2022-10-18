@@ -1,28 +1,20 @@
+use ssz_rs::prelude::Vector;
 use super::types::*;
 use super::utils::*;
-use alloc::vec::Vec;
+use crate::constants::*;
+use crate::types::SSZSyncCommittee;
 use alloc::string::String;
+use alloc::vec::Vec;
 
-
-macro_rules! tryprintln {
-    ($body:expr) => {
-        // println!(body)
-    };
-}
-
-
-
-pub fn process_sync_committee_period_update(
+pub fn check_sync_committee_period_update(
     prev_update: SyncCommitteePeriodUpdate,
     update: SyncCommitteePeriodUpdate,
     validators_root: H256,
-) -> Result<(SyncCommittee, BeaconHeader), String> {
+) -> Result<(), String> {
     let sync_committee_bits =
         get_sync_committee_bits(update.sync_aggregate.sync_committee_bits.clone())?;
-    //     .map_err(|_| DispatchError::Other("Couldn't process sync committee bits"))?;
-    tryprintln!("got sync committee bits");
+
     sync_committee_participation_is_supermajority(sync_committee_bits.clone())?;
-    tryprintln!("sync committee participation is supermajority");
     verify_sync_committee(
         update.next_sync_committee.clone(),
         update.next_sync_committee_branch,
@@ -30,7 +22,6 @@ pub fn process_sync_committee_period_update(
         NEXT_SYNC_COMMITTEE_DEPTH,
         NEXT_SYNC_COMMITTEE_INDEX,
     )?;
-    tryprintln!("verified sync committee");
     let block_root: H256 = hash_tree_root_beacon_header(update.finalized_header.clone())?.into();
     verify_header(
         block_root,
@@ -40,10 +31,7 @@ pub fn process_sync_committee_period_update(
         FINALIZED_ROOT_INDEX,
     )?;
 
-    // let current_period = compute_current_sync_period(update.attested_header.slot);
-    // let current_sync_committee = Self::get_sync_committee_for_period(current_period)?;
     let current_sync_committee = prev_update.next_sync_committee;
-    // let validators_root = <ValidatorsRoot<T>>::get();
 
     verify_signed_header(
         sync_committee_bits,
@@ -54,12 +42,8 @@ pub fn process_sync_committee_period_update(
         validators_root,
     )?;
 
-    // Self::store_sync_committee(current_period + 1, update.next_sync_committee);
-    // Self::store_finalized_header(block_root, update.finalized_header);
-    tryprintln!("verified signed header");
-    Ok((update.next_sync_committee, update.finalized_header))
+    Ok(())
 }
-
 
 fn sync_committee_participation_is_supermajority(
     sync_committee_bits: Vec<u8>,
@@ -71,8 +55,6 @@ fn sync_committee_participation_is_supermajority(
         return Err("Sync committee participation is not supermajority".into());
     }
 }
-
-
 
 fn verify_sync_committee(
     sync_committee: SyncCommittee,
