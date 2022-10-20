@@ -1,4 +1,4 @@
-use crate::constants::*;
+use crate::constants::mainnet::*;
 use crate::types::*;
 
 use crate::alloc::string::ToString;

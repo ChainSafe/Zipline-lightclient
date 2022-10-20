@@ -1,4 +1,4 @@
-use crate::constants::*;
+use crate::constants::mainnet::*;
 
 use alloc::vec;
 use alloc::vec::Vec;

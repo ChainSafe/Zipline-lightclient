@@ -1,10 +1,11 @@
 [package]
 name = "eth-lightclient"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
-milagro_bls = { git = "https://github.com/Snowfork/milagro_bls", default-features = false }
-ssz-rs = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev="8d497a949c320577aa1f741eb9f2958191df905b" }
-ssz-rs-derive = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev="8d497a949c320577aa1f741eb9f2958191df905b" }
+milagro_bls = { git = "https://github.com/Snowfork/milagro_bls", default-features = false, ref = "2c9e8b383981308a8b4cbbc19e0b897dcf14534b" }
+ssz-rs = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev = "8d497a949c320577aa1f741eb9f2958191df905b" }
+ssz-rs-derive = { git = "https://github.com/Snowfork/ssz_rs", default-features = false, rev = "8d497a949c320577aa1f741eb9f2958191df905b" }
 sha2 = { version = "0.10.6", default-features = false }

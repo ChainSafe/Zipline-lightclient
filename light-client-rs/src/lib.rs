@@ -4,9 +4,11 @@
 extern crate alloc;
 
 mod check_sync_committee_update;
-mod constants;
+pub mod constants;
 mod types;
 mod utils;
 
 pub use check_sync_committee_update::check_sync_committee_period_update;
-pub use types::{SyncCommitteePeriodUpdate, H256};
+pub use types::{
+    BeaconBlockHeader, PublicKey, SyncAggregate, SyncCommittee, SyncCommitteePeriodUpdate, H256,
+};

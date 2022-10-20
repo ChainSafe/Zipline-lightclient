@@ -1,9 +1,5 @@
 use eth_lightclient;
-
-const VALIDATORS_ROOT: [u8; 32] = [
-    75, 54, 61, 185, 78, 40, 97, 32, 215, 110, 185, 5, 52, 15, 221, 78, 84, 191, 233, 240, 107,
-    243, 63, 246, 207, 90, 210, 127, 81, 27, 254, 149,
-];
+use eth_lightclient::constants::mainnet::VALIDATORS_ROOT;
 
 const A: &[u8] = include_bytes!(
     "sync-updates/0xe4c2cee3a9455c2b7c0449152a8c7e1a7b811353e4ea2c1dbe1cbe0c790b45f7"
@@ -23,7 +19,6 @@ fn can_check_valid_transition() -> Result<(), String> {
 
 #[test]
 fn can_check_invalid_transition() {
-
     let mut b_fail = B.to_vec();
     b_fail[100] = 0x00; // zero out a random byte
 
