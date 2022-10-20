@@ -11,9 +11,6 @@ const A: &[u8] = include_bytes!(
 const B: &[u8] = include_bytes!(
     "sync-updates/0x78ae69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85"
 );
-const B_FAIL: &[u8] = include_bytes!(
-    "sync-updates/0xdead69239826edd5ac0abfe3a69e916e7479ad44e834e35a08e4df7601732a85"
-);
 
 #[test]
 fn can_check_valid_transition() -> Result<(), String> {
@@ -26,12 +23,16 @@ fn can_check_valid_transition() -> Result<(), String> {
 
 #[test]
 fn can_check_invalid_transition() {
+
+    let mut b_fail = B.to_vec();
+    b_fail[100] = 0x00; // zero out a random byte
+
     assert_eq!(
         eth_lightclient::check_sync_committee_period_update(
             eth_lightclient::SyncCommitteePeriodUpdate::try_from(A).unwrap(),
-            eth_lightclient::SyncCommitteePeriodUpdate::try_from(B_FAIL).unwrap(),
+            eth_lightclient::SyncCommitteePeriodUpdate::try_from(b_fail.as_slice()).unwrap(),
             eth_lightclient::H256(VALIDATORS_ROOT),
         ),
-        Err("Value not equal to root".to_string())
+        Err("SignatureVerificationFailed".to_string())
     )
 }
